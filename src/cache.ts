@@ -51,6 +51,27 @@ export function invalidate(key: string): void {
   }
 }
 
+// Removes every cached entry whose key starts with the given prefix -
+// for keys parameterized by request params (e.g. "matches:123:{"limit":30}")
+// where the exact param combination in use isn't worth tracking down.
+export function invalidatePrefix(prefix: string): void {
+  try {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith(PREFIX + prefix))
+      .forEach((k) => localStorage.removeItem(k));
+  } catch {
+    // ignore
+  }
+}
+
+// Overwrites a cache entry directly (with a fresh timestamp) rather than
+// through cached()'s fetch-on-miss path - for when the caller already has
+// the data (e.g. a locally merged match index) and just wants it to look
+// as if it were just fetched.
+export function writeCached<T>(key: string, data: T): void {
+  writeEnvelope(key, data);
+}
+
 export function clearAllCache(): void {
   try {
     Object.keys(localStorage)

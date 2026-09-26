@@ -1086,8 +1086,18 @@ tbody tr:last-child td {
 .profile-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 22px;
+}
+.profile-header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.profile-header-sync {
+  text-align: right;
 }
 .avatar {
   width: 60px;

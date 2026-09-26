@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { getMatch, getMatchExtrasIndex, getMatchIndexForStats, getMatches, getProfile, getWinLoss, OpenDotaError } from "../opendota";
+import { getMatch, getMatchExtrasIndex, getMatchIndexForStats, getMatches, getProfile, getWinLoss, OpenDotaError, syncRecentMatches } from "../opendota";
 import type { MatchExtras, MatchSummary, PlayerProfile, WinLoss } from "../types";
 import { HeroMultiSelect } from "../components/HeroMultiSelect";
 import { MultiSelect } from "../components/MultiSelect";
@@ -161,6 +161,9 @@ export function Dashboard({ accountId }: { accountId: number }) {
   const [roles, setRoles] = useState<Record<number, number | null | undefined>>({});
   const [lanes, setLanes] = useState<Record<number, LaneOutcome | null | undefined>>({});
 
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
   function updateParams(next: {
     page?: number;
     hero?: number[];
@@ -238,14 +241,10 @@ export function Dashboard({ accountId }: { accountId: number }) {
     if (next.patch !== undefined) setPatchFilter(next.patch);
   }
 
-  useEffect(() => {
-    setProfile(null);
-    setWl(null);
-    setError(null);
-    setAllMatches(undefined);
-    setFallbackMatches(null);
-    setExtrasIndex(null);
-
+  // Shared by the initial load and the "Sync games" button below - the
+  // button just doesn't reset everything to null first, so the page stays
+  // on the current data instead of flashing back to the loading screen.
+  function loadData() {
     Promise.all([getProfile(accountId), getWinLoss(accountId)])
       .then(([p, w]) => {
         setProfile(p);
@@ -260,7 +259,36 @@ export function Dashboard({ accountId }: { accountId: number }) {
     getMatchExtrasIndex()
       .then(setExtrasIndex)
       .catch(() => setExtrasIndex(null));
+  }
+
+  useEffect(() => {
+    setProfile(null);
+    setWl(null);
+    setError(null);
+    setAllMatches(undefined);
+    setFallbackMatches(null);
+    setExtrasIndex(null);
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountId]);
+
+  // Pulls the account's newest matches live and merges them in right away
+  // - see syncRecentMatches() in opendota.ts for why this is needed at all
+  // (the data branch/its 5-minute cache TTL can otherwise lag a fresh game
+  // by up to 20 minutes).
+  async function handleSync() {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const newCount = await syncRecentMatches(accountId);
+      loadData();
+      setSyncMessage(newCount > 0 ? `Found ${newCount} new match${newCount === 1 ? "" : "es"}.` : "No new matches.");
+    } catch (e) {
+      setSyncMessage(e instanceof OpenDotaError ? e.message : "Sync failed - try again in a bit.");
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   // Only reached when the stored index isn't available - no filters or
   // real pagination in that case, just a short recent-matches list
@@ -486,9 +514,17 @@ export function Dashboard({ accountId }: { accountId: number }) {
   return (
     <div>
       <div className="profile-header">
-        {profile.profile?.avatarfull && <img src={profile.profile.avatarfull} alt="" className="avatar" />}
-        <div>
-          <h2>{profile.profile?.personaname ?? `Account ${accountId}`}</h2>
+        <div className="profile-header-info">
+          {profile.profile?.avatarfull && <img src={profile.profile.avatarfull} alt="" className="avatar" />}
+          <div>
+            <h2>{profile.profile?.personaname ?? `Account ${accountId}`}</h2>
+          </div>
+        </div>
+        <div className="profile-header-sync">
+          <button type="button" onClick={handleSync} disabled={syncing}>
+            {syncing ? "Syncing..." : "Sync games"}
+          </button>
+          {syncMessage && <div className="status-ok small">{syncMessage}</div>}
         </div>
       </div>
 

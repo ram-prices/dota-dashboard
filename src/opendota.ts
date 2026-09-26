@@ -1,5 +1,5 @@
 import { getApiKey } from "./settings";
-import { cached, cachedForever } from "./cache";
+import { cached, cachedForever, invalidate, invalidatePrefix, writeCached } from "./cache";
 import { isRadiant } from "./dota";
 import type { HeroStat, MatchDetail, MatchExtras, MatchSummary, PeerStat, PlayerProfile, WinLoss } from "./types";
 
@@ -145,6 +145,39 @@ export function getMatchIndexForStats(): Promise<MatchSummary[] | null> {
 
 export function getMatchExtrasIndex(): Promise<MatchExtras[] | null> {
   return getStoredMatchExtrasIndex();
+}
+
+// Pulls the account's newest matches straight from OpenDota's live API and
+// merges any not already in the cached index in immediately - the manual,
+// on-demand equivalent of what request-parse.yml already does automatically
+// every 20 minutes, for right after a game finishes rather than waiting on
+// that schedule or this list's own 5-minute cache TTL. Also fires off a
+// parse request for each new match (best-effort, same as the "Request
+// parse" button on a match's own page) so full details show up soon.
+// Returns how many new matches were found.
+export async function syncRecentMatches(accountId: number, limit = 20): Promise<number> {
+  const live = await get<MatchSummary[]>(`/players/${accountId}/matches`, { limit });
+  const existing = (await getStoredMatchIndex()) ?? [];
+  const existingIds = new Set(existing.map((m) => m.match_id));
+  const fresh = live.filter((m) => !existingIds.has(m.match_id));
+
+  if (fresh.length > 0) {
+    const merged = [...fresh, ...existing].sort((a, b) => b.match_id - a.match_id);
+    writeCached("match-index", merged);
+    for (const m of fresh) {
+      requestParse(m.match_id).catch(() => {});
+    }
+  }
+
+  // Everything else derived from the match list (win/loss, hero/peer
+  // stats, the live-API fallback list) needs to be re-derived against the
+  // merge above rather than serving its own still-cached copy.
+  invalidatePrefix(`wl:${accountId}`);
+  invalidatePrefix(`matches:${accountId}`);
+  invalidate(`heroes:${accountId}`);
+  invalidate(`peers:${accountId}`);
+
+  return fresh.length;
 }
 
 export function getHeroStats(accountId: number): Promise<HeroStat[]> {
