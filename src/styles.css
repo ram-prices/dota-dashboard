@@ -661,7 +661,7 @@ tbody tr:last-child td {
    K/D/A sits in the middle and Duration/Mode are pushed to the right
    edge. */
 .match-table .match-row-spacer {
-  width: 100%;
+  width: 50%; /* two spacers: 100% each would all go to the first one */
   padding: 0;
 }
 .match-row-mode-cell {
