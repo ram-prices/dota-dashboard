@@ -46,7 +46,13 @@ export interface MatchExtras {
   radiant: number[];
   dire: number[];
   patch?: number;
+  // Every player on each side in slot order (see .github/scripts/match-extras.jq).
+  radiant_lineup?: LineupEntry[];
+  dire_lineup?: LineupEntry[];
 }
+
+// [hero_id, gold_per_min, position_est (null when OpenDota has none)]
+export type LineupEntry = [heroId: number, goldPerMin: number, positionEst: number | null];
 
 // One match-players-index.json entry (see .github/scripts/match-players.jq):
 // every non-anonymous player as [account_id, is_radiant (1/0), hero_id,

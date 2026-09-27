@@ -4,7 +4,6 @@ import { MatchDetail } from "./pages/MatchDetail";
 import { HeroStats } from "./pages/HeroStats";
 import { Peers } from "./pages/Peers";
 import { PlayerVs } from "./pages/PlayerVs";
-import { Trends } from "./pages/Trends";
 import { ChatSearch } from "./pages/ChatSearch";
 import { Settings } from "./pages/Settings";
 import { getAccountId } from "./settings";
@@ -32,9 +31,6 @@ export function App() {
           <NavLink to="/" className={navClass} end>
             Matches
           </NavLink>
-          <NavLink to="/trends" className={navClass}>
-            Trends
-          </NavLink>
           <NavLink to="/heroes" className={navClass}>
             Heroes
           </NavLink>
@@ -57,10 +53,6 @@ export function App() {
             <Route
               path="/"
               element={<RequireAccount>{(accountId) => <Dashboard accountId={accountId} />}</RequireAccount>}
-            />
-            <Route
-              path="/trends"
-              element={<RequireAccount>{(accountId) => <Trends accountId={accountId} />}</RequireAccount>}
             />
             <Route
               path="/heroes"

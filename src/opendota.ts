@@ -70,7 +70,7 @@ async function fetchRepoJson<T>(url: string): Promise<T | null> {
 
 // The lightweight per-match summary list (kills/deaths/duration/hero_id/
 // etc - the shape OpenDota's /players/{id}/matches returns, not the full
-// match detail), newest first. Backs the Matches list, Trends, win/loss
+// match detail), newest first. Backs the Matches list, win/loss
 // and hero stats.
 async function getStoredMatchIndex(): Promise<MatchSummary[] | null> {
   return cached("match-index", LIST_TTL_MS, () => fetchRepoJson<MatchSummary[]>(DATA_BRANCH_INDEX));
@@ -154,14 +154,9 @@ export async function getWinLoss(): Promise<WinLoss> {
   return { win, lose };
 }
 
-export async function getMatches(limit?: number): Promise<MatchSummary[]> {
-  const index = await requireMatchIndex();
-  return limit != null && limit > 0 ? index.slice(0, limit) : index;
-}
-
 // The full stored match index, for the Matches tab's client-side
 // filtering/pagination and the Hero Overview widget - the same cached
-// ("match-index") entry getMatches() reads, not a separate fetch.
+// ("match-index") entry getWinLoss() reads, not a separate fetch.
 export function getMatchIndexForStats(): Promise<MatchSummary[]> {
   return requireMatchIndex();
 }

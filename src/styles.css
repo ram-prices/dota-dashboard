@@ -698,13 +698,21 @@ tbody tr:last-child td {
   font-size: 10px;
   font-weight: 700;
 }
-/* A position estimated from hero + farm (unparsed match), not OpenDota's
-   own: faded and italic so it never passes for real data. */
-.role-badge-estimated {
-  opacity: 0.6;
-  font-style: italic;
-  background: transparent;
-  cursor: help;
+/* A position estimated from hero + farm (OpenDota has none for the match):
+   the same badge as a real one, marked only by a small dot in its corner
+   (and a tooltip saying so). */
+.role-badge {
+  position: relative;
+}
+.role-badge-estimated::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-dim);
 }
 
 /* ============================================================
@@ -1123,10 +1131,8 @@ tbody tr:last-child td {
   box-shadow: var(--elevation-1);
   overflow: hidden;
 }
-/* A card's title (a direct h3, or the Hero Overview's title row) spans the
-   card's full width as a solid header strip. */
-.chart > h3,
-.chart > .hero-overview-header {
+/* A card's title spans the card's full width as a solid header strip. */
+.chart > h3 {
   margin: -16px -16px 14px;
   padding: 10px 16px;
   background: var(--panel-header);
@@ -1135,9 +1141,6 @@ tbody tr:last-child td {
   font-size: 14px;
   color: var(--text);
   font-weight: 700;
-}
-.chart > .hero-overview-header h3 {
-  margin: 0;
 }
 .chart-svg {
   width: 100%;
@@ -1182,95 +1185,100 @@ tbody tr:last-child td {
 }
 
 /* ============================================================
-   Hero overview widget (Matches tab) - a "most played heroes" summary
-   card, one row per hero: matches/win-rate/KDA as three small bars, plus
-   a segmented lane breakdown bar underneath.
+   Most played heroes (HeroOverview) - a row of compact tiles inside the
+   summary box: portrait + name, games / win rate / KDA, and a thin
+   position bar (P1-P5, estimates included) with the main position.
    ============================================================ */
+.summary-box {
+  background: var(--panel-bg);
+  border-radius: var(--shape-lg);
+  margin-bottom: 14px;
+}
+.summary-box .profile-stats {
+  background: none;
+  margin-bottom: 0;
+}
+.hero-overview {
+  padding: 10px 14px 12px;
+}
+.summary-box .profile-stats + .hero-overview {
+  border-top: 1px solid var(--md-outline-variant);
+}
 .hero-overview-header {
-  margin-bottom: 4px;
-  flex-wrap: nowrap;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
-.hero-overview-header h3 {
-  margin: 0;
+.hero-overview-header a {
+  font-size: 12px;
+  font-weight: 700;
 }
-.hero-overview-list {
+.hero-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+}
+.hero-tile {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--shape-md);
+  background: var(--md-surface-container-low);
+  min-width: 0;
 }
-.hero-overview-row {
-  padding: 14px 0;
-  border-bottom: 1px solid var(--md-outline-variant);
-}
-.hero-overview-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-.hero-overview-row-header {
+.hero-tile-name {
   display: flex;
   align-items: center;
   gap: 8px;
   font-weight: 700;
   color: var(--text);
-  margin-bottom: 10px;
-}
-.hero-overview-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-.hero-overview-stat {
   min-width: 0;
 }
-.hero-overview-value {
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--text);
+.hero-tile-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.hero-overview-bar-track {
+.hero-tile-stats {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.hero-tile-stats strong {
+  color: var(--text);
+  font-weight: 700;
+}
+.hero-tile-stats .text-radiant strong {
+  color: var(--radiant);
+}
+.hero-tile-stats .text-dire strong {
+  color: var(--dire);
+}
+.hero-tile-positions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  cursor: default;
+}
+.hero-tile-position-track {
+  display: flex;
   height: 4px;
   border-radius: var(--shape-full);
-  background: var(--md-surface-container-high);
   overflow: hidden;
-  margin: 4px 0;
+  background: var(--md-surface-container-high);
 }
-.hero-overview-bar {
+.hero-tile-position-segment {
   height: 100%;
-  border-radius: var(--shape-full);
-  transition: width var(--duration-long) var(--motion-spring);
 }
-.hero-overview-bar-matches {
-  background: var(--pastel-lavender);
-}
-.hero-overview-bar-winrate {
-  background: var(--radiant);
-}
-.hero-overview-bar-kda {
-  background: var(--md-tertiary);
-}
-.hero-overview-label {
-  color: var(--text-dim);
+.hero-tile-position-label {
   font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: var(--label-tracking);
-  font-weight: 700;
-}
-.hero-overview-lane {
-  margin-top: 10px;
-}
-.hero-overview-lane-name {
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-.hero-overview-lane-track {
-  display: flex;
-  height: 6px;
-  border-radius: var(--shape-full);
-  overflow: hidden;
-  background: var(--md-surface-container-high);
-}
-.hero-overview-lane-segment {
-  height: 100%;
 }
 
 /* ============================================================
@@ -1747,48 +1755,6 @@ tbody tr:last-child td {
   width: 26px;
   height: 26px;
   border-radius: var(--shape-xs);
-}
-
-/* ============================================================
-   Trends bar chart
-   ============================================================ */
-.bar-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-.bar-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 28px;
-}
-.bar-track {
-  width: 22px;
-  display: flex;
-  align-items: flex-end;
-}
-.bar-fill {
-  width: 100%;
-  background: var(--dire);
-  border-radius: var(--shape-xs) var(--shape-xs) 0 0;
-  display: flex;
-  align-items: flex-end;
-  overflow: hidden;
-  transition: height var(--duration-long) var(--motion-spring);
-}
-.bar-fill-win {
-  width: 100%;
-  background: var(--radiant);
-  transition: height var(--duration-long) var(--motion-spring);
-}
-.bar-label {
-  font-size: 10px;
-  color: var(--text-dim);
-  margin-top: 4px;
-  writing-mode: vertical-rl;
 }
 
 /* ============================================================

@@ -10,7 +10,8 @@ import {
   getWinLoss,
   syncRecentMatches,
 } from "../opendota";
-import type { MatchExtras, MatchSummary, PlayerProfile, WinLoss } from "../types";
+import { HeroOverview } from "../components/HeroOverview";
+import type { HeroPositionPriors, MatchExtras, MatchSummary, PlayerProfile, WinLoss } from "../types";
 import { HeroMultiSelect } from "../components/HeroMultiSelect";
 import { MultiSelect } from "../components/MultiSelect";
 import {
@@ -22,7 +23,7 @@ import {
   heroName,
   isAbandoned,
   isEventGameModeKey,
-  estimateTeamPositions,
+  positionInMatch,
   isRadiant,
   laneOutcome,
   laneOutcomeLabel,
@@ -180,9 +181,9 @@ export function Dashboard({ accountId }: { accountId: number }) {
 
   // undefined = still loading, null = loaded but no rank/skill data available
   const [ranks, setRanks] = useState<Record<number, RankBadge | undefined>>({});
-  // estimated = no position in the match data (unparsed) - filled in by
-  // estimateTeamPositions() instead, and shown differently.
-  const [roles, setRoles] = useState<Record<number, { pos: number; estimated: boolean } | null | undefined>>({});
+  // For estimating positions in matches OpenDota has none for - see
+  // positionInMatch() in dota.ts. null until loaded (or if unavailable).
+  const [positionPriors, setPositionPriors] = useState<HeroPositionPriors | null>(null);
   const [lanes, setLanes] = useState<Record<number, LaneOutcome | null | undefined>>({});
 
   const [syncing, setSyncing] = useState(false);
@@ -318,6 +319,10 @@ export function Dashboard({ accountId }: { accountId: number }) {
     getMatchExtrasIndex()
       .then(setExtrasIndex)
       .catch(() => setExtrasIndex(null));
+
+    getHeroPositionPriors()
+      .then(setPositionPriors)
+      .catch(() => setPositionPriors(null));
   }
 
   useEffect(() => {
@@ -497,12 +502,10 @@ export function Dashboard({ accountId }: { accountId: number }) {
   useEffect(() => {
     if (!pageMatches) return;
     setRanks({});
-    setRoles({});
     setLanes({});
-    const priorsPromise = getHeroPositionPriors().catch(() => null);
     for (const match of pageMatches) {
       getMatch(match.match_id)
-        .then(async (detail) => {
+        .then((detail) => {
           const tier = matchRankTier(detail.players.map((p) => p.rank_tier));
           const badge: RankBadge =
             tier != null
@@ -513,23 +516,10 @@ export function Dashboard({ accountId }: { accountId: number }) {
                 })();
           setRanks((prev) => ({ ...prev, [match.match_id]: badge }));
 
-          const self = detail.players.find((p) => p.player_slot === match.player_slot);
-          let role: { pos: number; estimated: boolean } | null = null;
-          if (self?.position_est) {
-            role = { pos: self.position_est, estimated: false };
-          } else if (self) {
-            const priors = await priorsPromise;
-            const team = detail.players.filter((p) => isRadiant(p.player_slot) === isRadiant(self.player_slot));
-            const pos = priors ? estimateTeamPositions(team, priors).get(self.player_slot) : undefined;
-            if (pos) role = { pos, estimated: true };
-          }
-          setRoles((prev) => ({ ...prev, [match.match_id]: role }));
-
           setLanes((prev) => ({ ...prev, [match.match_id]: laneOutcome(detail, match.player_slot) }));
         })
         .catch(() => {
           setRanks((prev) => ({ ...prev, [match.match_id]: null }));
-          setRoles((prev) => ({ ...prev, [match.match_id]: null }));
           setLanes((prev) => ({ ...prev, [match.match_id]: null }));
         });
     }
@@ -584,32 +574,37 @@ export function Dashboard({ accountId }: { accountId: number }) {
         </div>
       </div>
 
-      <div className="profile-stats">
-        <div className="profile-stat">
-          <div className="profile-stat-value text-radiant">{displayWl.win}</div>
-          <div className="profile-stat-label">Wins</div>
-        </div>
-        <div className="profile-stat">
-          <div className="profile-stat-value text-dire">{displayWl.lose}</div>
-          <div className="profile-stat-label">Losses</div>
-        </div>
-        <div className="profile-stat profile-stat-winrate">
-          <div className="profile-stat-value">{winRate}%</div>
-          <div className="profile-stat-bar-track">
-            <div className="profile-stat-bar" style={{ width: `${winRate}%` }} />
-          </div>
-          <div className="profile-stat-label">Win Rate</div>
-        </div>
-        <div className="profile-stat">
-          <div className="profile-stat-value">{filtered ? filtered.length : displayWl.win + displayWl.lose}</div>
-          <div className="profile-stat-label">{isFiltered ? "Filtered Matches" : "Total Matches"}</div>
-        </div>
-        {filtered && (
+      {/* Summary: overall record for the current filters, plus the most
+          played heroes within them. */}
+      <div className="summary-box">
+        <div className="profile-stats">
           <div className="profile-stat">
-            <div className="profile-stat-value text-dim">{filteredAbandonedCount}</div>
-            <div className="profile-stat-label">Abandoned</div>
+            <div className="profile-stat-value text-radiant">{displayWl.win}</div>
+            <div className="profile-stat-label">Wins</div>
           </div>
-        )}
+          <div className="profile-stat">
+            <div className="profile-stat-value text-dire">{displayWl.lose}</div>
+            <div className="profile-stat-label">Losses</div>
+          </div>
+          <div className="profile-stat profile-stat-winrate">
+            <div className="profile-stat-value">{winRate}%</div>
+            <div className="profile-stat-bar-track">
+              <div className="profile-stat-bar" style={{ width: `${winRate}%` }} />
+            </div>
+            <div className="profile-stat-label">Win Rate</div>
+          </div>
+          <div className="profile-stat">
+            <div className="profile-stat-value">{filtered ? filtered.length : displayWl.win + displayWl.lose}</div>
+            <div className="profile-stat-label">{isFiltered ? "Filtered Matches" : "Total Matches"}</div>
+          </div>
+          {filtered && (
+            <div className="profile-stat">
+              <div className="profile-stat-value text-dim">{filteredAbandonedCount}</div>
+              <div className="profile-stat-label">Abandoned</div>
+            </div>
+          )}
+        </div>
+        {filtered && <HeroOverview matches={filtered} extras={extrasByMatchId} priors={positionPriors} />}
       </div>
 
       {allMatches && (
@@ -799,6 +794,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
             {pageMatches.map((m, i) => {
               const won = matchWon(m);
               const abandoned = isAbandoned(m.leaver_status);
+              const role = positionInMatch(m, extrasByMatchId?.get(m.match_id), positionPriors);
               return (
                 <tr
                   key={m.match_id}
@@ -823,17 +819,16 @@ export function Dashboard({ accountId }: { accountId: number }) {
                     </span>
                   </td>
                   <td className="match-row-pos-cell">
-                    {roles[m.match_id] && (
+                    {role && (
                       <span
-                        className={`role-badge${roles[m.match_id]!.estimated ? " role-badge-estimated" : ""}`}
+                        className={`role-badge${role.estimated ? " role-badge-estimated" : ""}`}
                         title={
-                          roles[m.match_id]!.estimated
-                            ? `${positionLabel(roles[m.match_id]!.pos)} (estimated from hero and farm - the replay was never parsed)`
-                            : (positionLabel(roles[m.match_id]!.pos) ?? undefined)
+                          role.estimated
+                            ? `${positionLabel(role.pos)} (estimated from hero and farm - OpenDota has no position for this match)`
+                            : (positionLabel(role.pos) ?? undefined)
                         }
                       >
-                        {positionShort(roles[m.match_id]!.pos)}
-                        {roles[m.match_id]!.estimated && "?"}
+                        {positionShort(role.pos)}
                       </span>
                     )}
                   </td>

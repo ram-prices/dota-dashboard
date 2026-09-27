@@ -4,7 +4,7 @@ import itemsData from "./data/items.json";
 import itemsByNameData from "./data/itemsByName.json";
 import abilitiesData from "./data/abilities.json";
 import patchesData from "./data/patches.json";
-import type { HeroPositionPriors, LogEntry, MatchDetail, MatchPlayer, ObjectiveEntry } from "./types";
+import type { HeroPositionPriors, LogEntry, MatchDetail, MatchExtras, MatchPlayer, MatchSummary, ObjectiveEntry } from "./types";
 
 const CDN = "https://cdn.cloudflare.steamstatic.com";
 
@@ -338,9 +338,9 @@ export function positionLabel(pos: number | undefined | null): string | null {
 // the single most likely assignment for the whole team, each position used
 // at most once, rather than guessing each player independently. Tested
 // against matches with known positions: ~69% exact, ~91% core vs support.
-export function estimateTeamPositions(team: MatchPlayer[], priors: HeroPositionPriors): Map<number, number> {
-  const result = new Map<number, number>();
-  if (team.length === 0 || team.length > 5) return result;
+// Returns positions aligned with `team` (0 = couldn't estimate).
+function estimatePositions(team: { heroId: number; gpm: number }[], priors: HeroPositionPriors): number[] {
+  if (team.length === 0 || team.length > 5) return team.map(() => 0);
 
   // Laplace-smoothed log P(position | counts) - a hero with few samples
   // falls back toward "any position", not to impossible.
@@ -349,14 +349,14 @@ export function estimateTeamPositions(team: MatchPlayer[], priors: HeroPositionP
     const total = c.reduce((a, b) => a + b, 0);
     return Math.log(((c[pos - 1] ?? 0) + 1) / (total + 5));
   };
-  const ranked = [...team].sort((a, b) => (b.gold_per_min ?? 0) - (a.gold_per_min ?? 0));
+  const ranked = [...team].sort((a, b) => b.gpm - a.gpm);
   const score = team.map((p) => {
     const rank = ranked.indexOf(p) + 1;
-    return [1, 2, 3, 4, 5].map((pos) => logP(priors.hero[String(p.hero_id)], pos) + logP(priors.gpmRank[String(rank)], pos));
+    return [1, 2, 3, 4, 5].map((pos) => logP(priors.hero[String(p.heroId)], pos) + logP(priors.gpmRank[String(rank)], pos));
   });
 
   // At most 5! = 120 assignments - just try them all.
-  let best: number[] | null = null;
+  let best: number[] = team.map(() => 0);
   let bestScore = -Infinity;
   const used = new Set<number>();
   const current: number[] = [];
@@ -378,12 +378,49 @@ export function estimateTeamPositions(team: MatchPlayer[], priors: HeroPositionP
     }
   };
   search(0, 0);
+  return best;
+}
 
-  const assignment: number[] = best ?? [];
+// estimatePositions() for a team from a full match's players, keyed by player_slot.
+export function estimateTeamPositions(team: MatchPlayer[], priors: HeroPositionPriors): Map<number, number> {
+  const positions = estimatePositions(
+    team.map((p) => ({ heroId: p.hero_id, gpm: p.gold_per_min ?? 0 })),
+    priors,
+  );
+  const result = new Map<number, number>();
   team.forEach((p, i) => {
-    if (assignment[i]) result.set(p.player_slot, assignment[i]);
+    if (positions[i]) result.set(p.player_slot, positions[i]);
   });
   return result;
+}
+
+export interface PlayedPosition {
+  pos: number;
+  // true when OpenDota had no position for this match and it was estimated
+  estimated: boolean;
+}
+
+// The tracked account's position in a match, from match-extras-index.json's
+// lineups (no full match file needed): OpenDota's own position_est when it
+// has one, otherwise the same whole-team estimate as estimateTeamPositions().
+// null when the match isn't in the extras index (not stored yet).
+export function positionInMatch(
+  match: MatchSummary,
+  extras: MatchExtras | undefined,
+  priors: HeroPositionPriors | null,
+): PlayedPosition | null {
+  const lineup = isRadiant(match.player_slot) ? extras?.radiant_lineup : extras?.dire_lineup;
+  if (!lineup) return null;
+  const mine = lineup.findIndex(([heroId]) => heroId === match.hero_id);
+  if (mine < 0) return null;
+  const known = lineup[mine][2];
+  if (known && known >= 1 && known <= 5) return { pos: known, estimated: false };
+  if (!priors) return null;
+  const estimated = estimatePositions(
+    lineup.map(([heroId, gpm]) => ({ heroId, gpm })),
+    priors,
+  )[mine];
+  return estimated ? { pos: estimated, estimated: true } : null;
 }
 
 // rank_tier is a per-player field: tens digit = medal (1 Herald .. 8

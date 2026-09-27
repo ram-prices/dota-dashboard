@@ -66,8 +66,6 @@ remembers you in this browser.
   order, a gold-advantage and XP-advantage graph over the game, an item
   purchase timeline, kill feed, ward placements, and a searchable **chat
   log**.
-- **Trends** — win rate by week over your recent matches, plus a
-  hero/result filter over that same match set.
 - **Heroes** — your per-hero games/win-rate, plus win rate with/against
   each hero.
 - **Teammates** — win rate with and against people you've played with at
@@ -214,7 +212,7 @@ src/
   settings.ts       account_id / API key storage + SteamID64 parsing
   dota.ts           hero/item/ability id -> name/icon lookups, formatting helpers
   data/             hero/item/ability name+image data (from odota/dotaconstants)
-  pages/            one file per route (Dashboard, MatchDetail, Trends, ...)
+  pages/            one file per route (Dashboard, MatchDetail, HeroStats, ...)
   components/       Scoreboard, AdvantageChart (shared across pages)
 ```
 
