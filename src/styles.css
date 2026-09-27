@@ -696,6 +696,14 @@ tbody tr:last-child td {
   align-items: center;
   gap: 6px;
 }
+.hero-portrait {
+  width: 48px;
+  height: 27px;
+  object-fit: cover;
+  border-radius: var(--shape-xs);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
 .match-row-hero-name {
   display: none;
 }

@@ -39,6 +39,13 @@ export function heroIcon(heroId: number | undefined | null): string | null {
   return h ? `${CDN}${h.icon}` : null;
 }
 
+// The wider landscape portrait (256x144) rather than the small square icon.
+export function heroPortrait(heroId: number | undefined | null): string | null {
+  if (!heroId) return null;
+  const h = heroesById[String(heroId)];
+  return h?.img ? `${CDN}${h.img}` : null;
+}
+
 // kills_log / a hero's internal unit name (e.g. "npc_dota_hero_axe") -> display name
 export function heroNameByUnit(unitName: string | undefined | null): string {
   if (!unitName) return "Unknown";

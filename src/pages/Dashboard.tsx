@@ -9,7 +9,7 @@ import {
   formatDuration,
   formatRelativeTime,
   gameModeKeyLabel,
-  heroIcon,
+  heroPortrait,
   heroName,
   isAbandoned,
   isEventGameModeKey,
@@ -690,8 +690,8 @@ export function Dashboard({ accountId }: { accountId: number }) {
                       aria-label={`${heroName(m.hero_id)} - ${abandoned ? "Abandoned" : won ? "Win" : "Loss"} - ${formatRelativeTime(m.start_time)}`}
                     />
                     <span className="match-row-hero">
-                      {heroIcon(m.hero_id) && (
-                        <img src={heroIcon(m.hero_id)!} alt={heroName(m.hero_id)} className="hero-icon" />
+                      {heroPortrait(m.hero_id) && (
+                        <img src={heroPortrait(m.hero_id)!} alt={heroName(m.hero_id)} className="hero-portrait" loading="lazy" />
                       )}
                       <span className="match-row-hero-name">{heroName(m.hero_id)}</span>
                     </span>
