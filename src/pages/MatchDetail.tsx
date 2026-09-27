@@ -19,7 +19,7 @@ import {
   rankTierLabel,
   skillBracketLabel,
 } from "../dota";
-import { Scoreboard, type ScrollGroup } from "../components/Scoreboard";
+import { bestStats, Scoreboard, type ScrollGroup } from "../components/Scoreboard";
 import { LaneMatchups } from "../components/LaneMatchups";
 import { AdvantageChart } from "../components/AdvantageChart";
 import { RemainingFields } from "../components/PrettyValue";
@@ -235,6 +235,8 @@ export function MatchDetail() {
 
   const radiant = data.players.filter((p) => p.isRadiant ?? isRadiant(p.player_slot));
   const dire = data.players.filter((p) => !(p.isRadiant ?? isRadiant(p.player_slot)));
+  // Best value of each stat across all ten players, underlined on the scoreboards.
+  const matchBest = bestStats(data.players);
 
 
   function playerLabel(p: MatchPlayer) {
@@ -248,8 +250,8 @@ export function MatchDetail() {
 
   const overviewTab = (
     <>
-      <Scoreboard players={radiant} teamLabel="Radiant" className="team-radiant" scrollGroup={scoreboardScroll} />
-      <Scoreboard players={dire} teamLabel="Dire" className="team-dire" scrollGroup={scoreboardScroll} />
+      <Scoreboard players={radiant} teamLabel="Radiant" className="team-radiant" scrollGroup={scoreboardScroll} best={matchBest} />
+      <Scoreboard players={dire} teamLabel="Dire" className="team-dire" scrollGroup={scoreboardScroll} best={matchBest} />
 
       {data.players.some((p) => (p.ability_upgrades_arr ?? []).length > 0) && (
         <div className="section">

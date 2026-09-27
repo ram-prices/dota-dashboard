@@ -7,14 +7,54 @@ import { formatGameTime, heroIcon, heroName, itemImage, itemName, itemObtainedTi
 // (Destroyed - a ward is a killable unit, so OpenDota counts destroying
 // one as a "kill") share the same "obs/sen" display: obs count in
 // observer-ward yellow, sentry count in sentry-ward blue.
-function WardStat({ obs, sen }: { obs: number; sen: number }) {
+function WardStat({ obs, sen, bestObs, bestSen }: { obs: number; sen: number; bestObs: boolean; bestSen: boolean }) {
   return (
     <span className="ward-stat">
-      <span className="ward-obs">{obs}</span>
+      <span className={`ward-obs${bestObs ? " stat-best" : ""}`}>{obs}</span>
       <span className="ward-stat-sep">/</span>
-      <span className="ward-sen">{sen}</span>
+      <span className={`ward-sen${bestSen ? " stat-best" : ""}`}>{sen}</span>
     </span>
   );
+}
+
+// Every stat the scoreboard can underline as the best in the match, and how
+// to read it off a player. Deaths is the one where lower is better.
+const BEST_STATS = {
+  level: (p: MatchPlayer) => p.level,
+  kills: (p: MatchPlayer) => p.kills,
+  deaths: (p: MatchPlayer) => p.deaths,
+  assists: (p: MatchPlayer) => p.assists,
+  netWorth: (p: MatchPlayer) => p.net_worth,
+  obsPlaced: (p: MatchPlayer) => p.obs_placed ?? 0,
+  senPlaced: (p: MatchPlayer) => p.sen_placed ?? 0,
+  obsKilled: (p: MatchPlayer) => p.observer_kills ?? 0,
+  senKilled: (p: MatchPlayer) => p.sentry_kills ?? 0,
+  lastHits: (p: MatchPlayer) => p.last_hits,
+  denies: (p: MatchPlayer) => p.denies,
+  gpm: (p: MatchPlayer) => p.gold_per_min,
+  xpm: (p: MatchPlayer) => p.xp_per_min,
+  heroDamage: (p: MatchPlayer) => p.hero_damage,
+  heroHealing: (p: MatchPlayer) => p.hero_healing,
+  towerDamage: (p: MatchPlayer) => p.tower_damage,
+} satisfies Record<string, (p: MatchPlayer) => number | null | undefined>;
+export type BestStats = Partial<Record<keyof typeof BEST_STATS, number>>;
+
+// The best value of each stat across all ten players (both teams): highest,
+// except fewest deaths. A stat nobody scored in (best is 0 - e.g. no one
+// did tower damage) has no best, so a column of zeros isn't underlined.
+export function bestStats(players: MatchPlayer[]): BestStats {
+  const best: BestStats = {};
+  for (const [key, read] of Object.entries(BEST_STATS) as [keyof typeof BEST_STATS, (p: MatchPlayer) => number | null | undefined][]) {
+    const values = players.map(read).filter((v): v is number => typeof v === "number");
+    if (values.length === 0) continue;
+    if (key === "deaths") {
+      best[key] = Math.min(...values);
+    } else {
+      const max = Math.max(...values);
+      if (max > 0) best[key] = max;
+    }
+  }
+  return best;
 }
 
 // Inventory in the order the items were acquired (earliest first) rather
@@ -88,13 +128,21 @@ export function Scoreboard({
   teamLabel,
   className,
   scrollGroup,
+  best = {},
 }: {
   players: MatchPlayer[];
   teamLabel: string;
   className: string;
   scrollGroup?: ScrollGroup;
+  // From bestStats() over the whole match - values equal to these get underlined.
+  best?: BestStats;
 }) {
   const tableRef = useRef<HTMLTableElement>(null);
+  const mark = (key: keyof typeof BEST_STATS, value: number | null | undefined) =>
+    value != null && best[key] === value ? "stat-best" : undefined;
+  const cell = (key: keyof typeof BEST_STATS, value: number | null | undefined) => (
+    <span className={mark(key, value)}>{value ?? "-"}</span>
+  );
 
   // Keeps both teams' scoreboards horizontally scrolled to the same spot:
   // scrolling either one scrolls the other by the same amount, live.
@@ -171,27 +219,37 @@ export function Scoreboard({
                   </div>
                 )}
               </td>
-              <td>{p.level}</td>
-              <td className="scoreboard-kda-cell">{p.kills}</td>
-              <td className="scoreboard-kda-cell">{p.deaths}</td>
-              <td className="scoreboard-kda-cell">{p.assists}</td>
-              <td>{p.net_worth ?? "-"}</td>
+              <td>{cell("level", p.level)}</td>
+              <td className="scoreboard-kda-cell">{cell("kills", p.kills)}</td>
+              <td className="scoreboard-kda-cell">{cell("deaths", p.deaths)}</td>
+              <td className="scoreboard-kda-cell">{cell("assists", p.assists)}</td>
+              <td>{cell("netWorth", p.net_worth)}</td>
               <td className="scoreboard-items-cell">
                 <ItemGroups player={p} />
               </td>
               <td>
-                <WardStat obs={p.obs_placed ?? 0} sen={p.sen_placed ?? 0} />
+                <WardStat
+                  obs={p.obs_placed ?? 0}
+                  sen={p.sen_placed ?? 0}
+                  bestObs={Boolean(mark("obsPlaced", p.obs_placed ?? 0))}
+                  bestSen={Boolean(mark("senPlaced", p.sen_placed ?? 0))}
+                />
               </td>
               <td>
-                <WardStat obs={p.observer_kills ?? 0} sen={p.sentry_kills ?? 0} />
+                <WardStat
+                  obs={p.observer_kills ?? 0}
+                  sen={p.sentry_kills ?? 0}
+                  bestObs={Boolean(mark("obsKilled", p.observer_kills ?? 0))}
+                  bestSen={Boolean(mark("senKilled", p.sentry_kills ?? 0))}
+                />
               </td>
-              <td>{p.last_hits}</td>
-              <td>{p.denies}</td>
-              <td>{p.gold_per_min}</td>
-              <td>{p.xp_per_min}</td>
-              <td>{p.hero_damage ?? "-"}</td>
-              <td>{p.hero_healing ?? "-"}</td>
-              <td>{p.tower_damage ?? "-"}</td>
+              <td>{cell("lastHits", p.last_hits)}</td>
+              <td>{cell("denies", p.denies)}</td>
+              <td>{cell("gpm", p.gold_per_min)}</td>
+              <td>{cell("xpm", p.xp_per_min)}</td>
+              <td>{cell("heroDamage", p.hero_damage)}</td>
+              <td>{cell("heroHealing", p.hero_healing)}</td>
+              <td>{cell("towerDamage", p.tower_damage)}</td>
             </tr>
           );
         })}

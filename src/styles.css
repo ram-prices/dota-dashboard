@@ -1072,6 +1072,14 @@ tbody tr:last-child td {
    Items column - and so both teams' tables - come out the same width
    regardless of who's holding how much. That keeps the two scoreboards'
    columns lined up while they scroll together (see Scoreboard.tsx). */
+/* Best value of a stat across the whole match (fewest deaths, most of
+   everything else) - see bestStats() in Scoreboard.tsx. */
+.stat-best {
+  text-decoration: underline;
+  text-decoration-color: var(--md-primary);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
 .scoreboard-items-cell {
   min-width: 236px;
 }
