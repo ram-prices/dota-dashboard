@@ -656,11 +656,14 @@ tbody tr:last-child td {
 .match-table .match-row-hero-cell {
   padding-left: 20px;
 }
-.match-row-mode-cell {
-  /* Signals the browser's table layout to give this column any leftover
-     width instead of leaving it as dead space after the last column -
-     the other columns stay sized to their own content. */
+/* Empty column that takes all the leftover width (every other column
+   stays sized to its own content), which pushes Duration and Mode over
+   to the right edge. */
+.match-table .match-row-spacer {
   width: 100%;
+  padding: 0;
+}
+.match-row-mode-cell {
   text-align: right;
 }
 .match-table .match-row-duration-cell {

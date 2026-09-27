@@ -664,6 +664,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
               <th className="match-row-kda-cell" title="Kills">K</th>
               <th className="match-row-kda-cell" title="Deaths">D</th>
               <th className="match-row-kda-cell" title="Assists">A</th>
+              <th className="match-row-spacer" aria-hidden="true" />
               <th className="match-row-duration-cell">
                 <span className="th-long">Duration</span>
                 <span className="th-short">Time</span>
@@ -729,6 +730,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
                   <td className="match-row-kda-cell">{m.kills}</td>
                   <td className="match-row-kda-cell">{m.deaths}</td>
                   <td className="match-row-kda-cell">{m.assists}</td>
+                  <td className="match-row-spacer" aria-hidden="true" />
                   <td className="match-row-duration-cell">
                     <div className="match-row-stacked">
                       <span>{formatDuration(m.duration)}</span>
