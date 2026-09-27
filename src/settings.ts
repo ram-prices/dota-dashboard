@@ -1,4 +1,3 @@
-const ACCOUNT_ID_KEY = "dota-dash:settings:accountId";
 const API_KEY_KEY = "dota-dash:settings:apiKey";
 
 const STEAM64_BASE = 76561197960265728n;
@@ -18,20 +17,17 @@ export function parseAccountId(raw: string): number | null {
   return Number(accountId);
 }
 
-export function getAccountId(): number | null {
-  const stored = localStorage.getItem(ACCOUNT_ID_KEY);
-  if (stored) return Number(stored);
-  const buildDefault = import.meta.env.VITE_DEFAULT_ACCOUNT_ID;
-  if (buildDefault) return parseAccountId(buildDefault);
-  return null;
-}
+// The one account this site tracks. The data branch (and the workflows that
+// fill it) only ever hold this account's match history, so viewing any
+// other account would just show this one's data under the wrong name -
+// hence no way to change it from the UI. Set per build via
+// VITE_DEFAULT_ACCOUNT_ID (see .github/workflows/deploy.yml).
+const DEFAULT_TRACKED_ACCOUNT_ID = 90031862;
+export const TRACKED_ACCOUNT_ID: number =
+  parseAccountId(import.meta.env.VITE_DEFAULT_ACCOUNT_ID ?? "") ?? DEFAULT_TRACKED_ACCOUNT_ID;
 
-export function setAccountId(accountId: number): void {
-  localStorage.setItem(ACCOUNT_ID_KEY, String(accountId));
-}
-
-export function clearAccountId(): void {
-  localStorage.removeItem(ACCOUNT_ID_KEY);
+export function getAccountId(): number {
+  return TRACKED_ACCOUNT_ID;
 }
 
 export function getApiKey(): string | null {

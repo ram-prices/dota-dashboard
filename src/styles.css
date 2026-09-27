@@ -1236,25 +1236,30 @@ tbody tr:last-child td {
    - reflects whatever match filters are currently applied on the Matches
    tab, so it doubles as a quick "here's what this filtered set adds up
    to" readout instead of always showing the unfiltered all-time record. */
+/* Compact one-line summary: each stat is "value LABEL" side by side,
+   wrapping onto a second line only on narrow screens. */
 .profile-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 22px;
   background: var(--panel-bg);
   border: var(--panel-border);
   border-radius: var(--shape-lg);
-  padding: 16px 18px;
-  margin-bottom: 20px;
+  padding: 8px 14px;
+  margin-bottom: 14px;
   box-shadow: var(--elevation-1);
 }
 .profile-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   min-width: 0;
-  text-align: center;
 }
 .profile-stat-value {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 24px;
+  font-size: 15px;
   color: var(--text);
 }
 .profile-stat-label {
@@ -1263,27 +1268,21 @@ tbody tr:last-child td {
   text-transform: uppercase;
   letter-spacing: var(--label-tracking);
   font-weight: 700;
-  margin-top: 2px;
 }
+/* Win rate's bar sits between its value and label, as a short inline bar */
 .profile-stat-bar-track {
-  height: 4px;
+  align-self: center;
+  width: 40px;
+  height: 3px;
   border-radius: var(--shape-full);
   background: var(--md-surface-container-high);
   overflow: hidden;
-  margin: 6px auto 0;
-  max-width: 80px;
 }
 .profile-stat-bar {
   height: 100%;
   border-radius: var(--shape-full);
   background: var(--md-primary);
   transition: width var(--duration-long) var(--motion-spring);
-}
-@media (max-width: 480px) {
-  .profile-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px 14px;
-  }
 }
 
 .vs-stat {

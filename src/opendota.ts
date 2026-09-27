@@ -17,8 +17,8 @@ import type {
 // .github/workflows/export-matches.yml, request-parse.yml, and the data
 // branch's own README) - a permanent copy of whatever OpenDota had at
 // export/poll time. OpenDota's live API is only ever called on an explicit
-// user action: Sync games, Fetch from OpenDota / Request parse on a match
-// that isn't stored yet, and checking a new account in Settings. Nothing
+// user action: Sync games, and Fetch from OpenDota / Request parse on a
+// match that isn't stored yet. Nothing
 // here silently falls back to it.
 const BASE = "https://api.opendota.com/api";
 
@@ -141,12 +141,6 @@ async function get<T>(path: string, params: Record<string, string | number | und
 export async function getProfile(accountId: number): Promise<PlayerProfile | null> {
   const profile = await cached("profile", LIST_TTL_MS, () => fetchRepoJson<PlayerProfile>(DATA_BRANCH_PROFILE));
   return profile?.profile?.account_id === accountId ? profile : null;
-}
-
-// Settings' "check this account exists" - an explicit user action, so it's
-// allowed to go to OpenDota directly.
-export function lookupProfileLive(accountId: number): Promise<PlayerProfile> {
-  return get<PlayerProfile>(`/players/${accountId}`);
 }
 
 export async function getWinLoss(): Promise<WinLoss> {

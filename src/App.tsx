@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { Dashboard } from "./pages/Dashboard";
 import { MatchDetail } from "./pages/MatchDetail";
 import { HeroStats } from "./pages/HeroStats";
@@ -10,13 +9,10 @@ import { ChatSearch } from "./pages/ChatSearch";
 import { Settings } from "./pages/Settings";
 import { getAccountId } from "./settings";
 
+// Passes the tracked account (fixed per build - see settings.ts) down to
+// pages that need it.
 function RequireAccount({ children }: { children: (accountId: number) => React.ReactNode }) {
-  const [accountId] = useState(getAccountId);
-  const location = useLocation();
-  if (accountId == null) {
-    return <Navigate to="/settings" state={{ from: location }} replace />;
-  }
-  return <>{children(accountId)}</>;
+  return <>{children(getAccountId())}</>;
 }
 
 function navClass({ isActive }: { isActive: boolean }) {
