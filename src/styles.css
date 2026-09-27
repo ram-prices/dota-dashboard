@@ -664,8 +664,14 @@ tbody tr:last-child td {
   text-align: right;
 }
 .match-table .match-row-duration-cell {
+  text-align: center;
+}
+/* Mode is the last column, so it carries the right-edge padding */
+.match-table .match-row-mode-cell {
   padding-right: 20px;
-  text-align: right;
+}
+.match-table th.match-row-hero-cell {
+  text-align: center;
 }
 .match-table .th-short {
   display: none;
@@ -684,7 +690,7 @@ tbody tr:last-child td {
     width: 36px;
     height: 20px;
   }
-  .match-table .match-row-duration-cell {
+  .match-table .match-row-mode-cell {
     padding-right: 12px;
   }
   /* Nine columns on a phone: tighter cells so the table fits without

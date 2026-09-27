@@ -648,24 +648,29 @@ export function Dashboard({ accountId }: { accountId: number }) {
           <thead>
             <tr>
               {/* Full labels, with shorter ones swapped in on narrow screens
-                  so the header row isn't what forces the table to scroll. */}
+                  so the header row isn't what forces the table to scroll.
+                  Position / result / lane are self-explanatory badges, so
+                  their headers are left blank (screen-reader text only). */}
               <th className="match-row-hero-cell">Hero</th>
-              <th className="match-row-pos-cell" title="Position you played (1-5)">Pos</th>
-              <th className="match-row-result-cell">
-                <span className="th-long">Result</span>
-                <span className="th-short">W/L</span>
+              <th className="match-row-pos-cell">
+                <span className="sr-only">Position</span>
               </th>
-              <th className="match-row-lane-cell" title="How your lane went">Lane</th>
+              <th className="match-row-result-cell">
+                <span className="sr-only">Result</span>
+              </th>
+              <th className="match-row-lane-cell">
+                <span className="sr-only">Lane outcome</span>
+              </th>
               <th className="match-row-kda-cell" title="Kills">K</th>
               <th className="match-row-kda-cell" title="Deaths">D</th>
               <th className="match-row-kda-cell" title="Assists">A</th>
-              <th className="match-row-mode-cell" title="Lobby type, game mode, and average rank">
-                <span className="th-long">Type / Mode / Rank</span>
-                <span className="th-short">Mode</span>
-              </th>
               <th className="match-row-duration-cell">
                 <span className="th-long">Duration</span>
                 <span className="th-short">Time</span>
+              </th>
+              <th className="match-row-mode-cell" title="Lobby type, game mode, and average rank">
+                <span className="th-long">Type / Mode / Rank</span>
+                <span className="th-short">Mode</span>
               </th>
             </tr>
           </thead>
@@ -724,6 +729,12 @@ export function Dashboard({ accountId }: { accountId: number }) {
                   <td className="match-row-kda-cell">{m.kills}</td>
                   <td className="match-row-kda-cell">{m.deaths}</td>
                   <td className="match-row-kda-cell">{m.assists}</td>
+                  <td className="match-row-duration-cell">
+                    <div className="match-row-stacked">
+                      <span>{formatDuration(m.duration)}</span>
+                      <span className="text-dim small">{formatRelativeTime(m.start_time)}</span>
+                    </div>
+                  </td>
                   <td className="match-row-mode-cell">
                     <div className="match-row-stacked">
                       <span>{matchLobbyLabel(m.lobby_type, m.game_mode, m.start_time)}</span>
@@ -731,12 +742,6 @@ export function Dashboard({ accountId }: { accountId: number }) {
                       <span className="small" style={{ color: ranks[m.match_id]?.color ?? "var(--text-dim)" }}>
                         {ranks[m.match_id] === undefined ? "…" : (ranks[m.match_id] ? ranks[m.match_id]!.label : "-")}
                       </span>
-                    </div>
-                  </td>
-                  <td className="match-row-duration-cell">
-                    <div className="match-row-stacked">
-                      <span>{formatDuration(m.duration)}</span>
-                      <span className="text-dim small">{formatRelativeTime(m.start_time)}</span>
                     </div>
                   </td>
                 </tr>
