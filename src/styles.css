@@ -60,7 +60,7 @@
      solid header strip (--panel-header) across its full width. */
   --panel-bg: var(--md-surface-container);
   --panel-bg-subtle: var(--md-surface-container);
-  --panel-border: 1px solid var(--md-outline-variant);
+  --panel-border: none;
   --panel-header: var(--md-surface-container-high);
   /* Opaque (not a translucent overlay) so sticky table cells can match it */
   --row-stripe: color-mix(in srgb, #ffffff 2.5%, var(--md-surface-container));
@@ -82,9 +82,9 @@
   --shape-full: 3px;
 
   /* Elevation - kept minimal; panels read by fill contrast, not shadow */
-  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --elevation-2: 0 2px 8px rgba(0, 0, 0, 0.35);
-  --elevation-3: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --elevation-1: none;
+  --elevation-2: none;
+  --elevation-3: none;
 
   /* Motion */
   --motion-spring: cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -151,7 +151,6 @@ h1, h2, h3, h4 {
    DOTABUFF tooltip. */
 h1, h2 {
   text-transform: uppercase;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
 }
 
 a {
@@ -175,7 +174,7 @@ button {
   font-family: var(--font-body);
   background: var(--md-surface-container-high);
   color: var(--text);
-  border: 1px solid var(--md-outline);
+  border: 1px solid transparent;
   padding: 8px 16px;
   border-radius: var(--shape-sm);
   cursor: pointer;
@@ -188,7 +187,6 @@ button {
 }
 :where(button:hover:not(:disabled)) {
   background: var(--md-surface-container-highest);
-  border-color: color-mix(in srgb, var(--md-primary) 45%, var(--md-outline));
 }
 :where(button:disabled) {
   opacity: 0.45;
@@ -213,8 +211,6 @@ button {
   gap: 0 24px;
   padding: 0 24px;
   background: var(--md-surface-container);
-  border-bottom: 1px solid var(--md-outline-variant);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -230,7 +226,6 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: var(--text);
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
 }
 /* Small pastel block before the name - the site's only logo. */
 .brand::before {
@@ -239,7 +234,6 @@ button {
   height: 12px;
   border-radius: 2px;
   background: linear-gradient(135deg, var(--pastel-lavender), var(--pastel-mint));
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
 }
 .brand:hover {
   color: var(--text);
@@ -356,13 +350,11 @@ button {
   text-align: center;
   color: var(--text-soft);
   background: color-mix(in srgb, var(--pastel-sky) 9%, var(--md-surface-container));
-  border: 1px solid color-mix(in srgb, var(--pastel-sky) 18%, var(--md-outline-variant));
   border-radius: var(--shape-lg);
 }
 
 .error-box {
   background: color-mix(in srgb, var(--md-error) 14%, var(--md-surface-container));
-  border: 1px solid color-mix(in srgb, var(--md-error) 50%, transparent);
   color: var(--md-error);
   padding: 14px 18px;
   border-radius: var(--shape-md);
@@ -396,7 +388,7 @@ button {
 .toolbar select {
   background: var(--md-surface-container-high);
   color: var(--text);
-  border: 1px solid var(--md-outline);
+  border: 1px solid transparent;
   padding: 7px 12px;
   border-radius: var(--shape-sm);
   font-family: var(--font-body);
@@ -406,7 +398,7 @@ button {
   transition: border-color var(--duration-short) var(--motion-standard);
 }
 .toolbar select:hover {
-  border-color: var(--md-primary);
+  background: var(--md-surface-container-highest);
 }
 .match-filters {
   justify-content: flex-start;
@@ -419,7 +411,7 @@ button {
 .filter-chip {
   background: var(--md-surface-container-high);
   color: var(--text-dim);
-  border: 1px solid var(--md-outline);
+  border: 1px solid transparent;
   padding: 6px 12px;
   border-radius: var(--shape-sm);
   font-weight: 600;
@@ -432,12 +424,11 @@ button {
 }
 .filter-chip:hover {
   color: var(--text);
-  border-color: color-mix(in srgb, var(--md-primary) 45%, var(--md-outline));
+  background: var(--md-surface-container-highest);
 }
 .filter-chip-active {
   background: var(--selected-bg);
   color: var(--md-on-primary-container);
-  border-color: var(--md-primary);
 }
 
 /* Picking a hero from the dropdown adds it as a removable chip below,
@@ -459,7 +450,7 @@ button {
   gap: 5px;
   background: var(--selected-bg);
   color: var(--md-on-primary-container);
-  border: 1px solid var(--md-primary);
+  border: 1px solid transparent;
   padding: 3px 6px 3px 3px;
   border-radius: var(--shape-full);
   font-weight: 600;
@@ -512,7 +503,6 @@ th,
 td {
   padding: 9px 14px;
   text-align: left;
-  border-bottom: 1px solid var(--md-outline-variant);
   white-space: nowrap;
 }
 th {
@@ -522,7 +512,6 @@ th {
   letter-spacing: var(--label-tracking);
   text-transform: uppercase;
   background: var(--panel-header);
-  border-bottom: 1px solid var(--md-surface-dim);
 }
 tbody tr:nth-child(even) {
   background: var(--row-stripe);
@@ -595,7 +584,6 @@ tbody tr:last-child td {
   height: 26px;
   border-radius: var(--shape-xs);
   vertical-align: middle;
-  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
 }
 .hero-icon-cell {
   /* Pinned via width = min-width = max-width so the rendered size is
@@ -618,7 +606,6 @@ tbody tr:last-child td {
   padding: 0 5px;
   border-radius: var(--shape-full);
   background: var(--md-surface-container-high);
-  border: 1px solid var(--md-outline-variant);
   color: var(--text-dim);
   font-size: 10px;
   font-weight: 700;
@@ -788,7 +775,6 @@ tbody tr:last-child td {
   width: 24px;
   height: 18px;
   border-radius: 4px;
-  border: 1px solid var(--md-outline-variant);
   object-fit: cover;
   transition: transform var(--duration-short) var(--motion-spring);
 }
@@ -796,7 +782,6 @@ tbody tr:last-child td {
   transform: scale(1.35);
   z-index: 2;
   position: relative;
-  box-shadow: var(--elevation-2);
 }
 
 .ward-stat {
@@ -826,11 +811,9 @@ tbody tr:last-child td {
 }
 .match-header h2.radiant-won {
   color: var(--radiant);
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
 }
 .match-header h2.dire-won {
   color: var(--dire);
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
 }
 .match-meta {
   color: var(--text-dim);
@@ -874,7 +857,6 @@ tbody tr:last-child td {
 .scoreboard tbody .hero-name-cell {
   left: 42px;
   padding-left: 6px;
-  box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.5);
   /* Pinned for the same reason as the icon column: hero/player names
      vary in length, so an auto width means the Radiant and Dire tables
      break into their scrolling columns at different points and don't
@@ -966,7 +948,6 @@ tbody tr:last-child td {
   margin: -16px -16px 14px;
   padding: 10px 16px;
   background: var(--panel-header);
-  border-bottom: 1px solid var(--md-surface-dim);
 }
 .chart h3 {
   font-size: 14px;
@@ -1177,8 +1158,6 @@ tbody tr:last-child td {
   width: 64px;
   height: 64px;
   border-radius: var(--shape-sm);
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--md-outline);
 }
 .profile-header h2 {
   margin: 0 0 4px;
@@ -1245,7 +1224,6 @@ tbody tr:last-child td {
   font-weight: 700;
   margin: 4px 0;
   color: var(--md-primary);
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
   animation: pop-in var(--duration-medium) var(--motion-spring) both;
 }
 
@@ -1275,7 +1253,7 @@ tbody tr:last-child td {
   width: 100%;
   background: var(--md-surface-container-lowest);
   color: var(--text);
-  border: 1px solid var(--md-outline);
+  border: 1px solid transparent;
   padding: 11px 16px;
   border-radius: var(--shape-md);
   font-size: 14px;
@@ -1298,22 +1276,19 @@ tbody tr:last-child td {
 .settings button {
   background: var(--md-primary);
   color: var(--md-on-primary);
-  border: 1px solid var(--md-primary);
+  border: 1px solid transparent;
   padding: 9px 22px;
   font-weight: 700;
 }
 .settings button:hover:not(:disabled) {
   background: var(--md-on-primary-container);
-  border-color: var(--md-on-primary-container);
 }
 .settings button.danger {
   background: var(--md-surface-container-high);
   color: var(--md-error);
-  border-color: color-mix(in srgb, var(--md-error) 60%, transparent);
 }
 .settings button.danger:hover:not(:disabled) {
   background: color-mix(in srgb, var(--md-error) 12%, transparent);
-  border-color: var(--md-error);
 }
 .settings hr {
   border: none;
@@ -1394,7 +1369,6 @@ tbody tr:last-child td {
 }
 .lane-h2h-pair {
   background: var(--md-surface-container-low);
-  border: 1px solid var(--md-outline-variant);
   border-radius: var(--shape-md);
   overflow: hidden;
 }
@@ -1510,7 +1484,6 @@ tbody tr:last-child td {
 }
 .section[open] > summary {
   margin-bottom: 12px;
-  border-bottom: 1px solid var(--md-surface-dim);
 }
 .section summary::-webkit-details-marker {
   display: none;
@@ -1543,7 +1516,7 @@ tbody tr:last-child td {
   width: 100%;
   background: var(--md-surface-container-lowest);
   color: var(--text);
-  border: 1px solid var(--md-outline);
+  border: 1px solid transparent;
   padding: 10px 16px;
   border-radius: var(--shape-md);
   margin: 12px 0;
@@ -1581,14 +1554,13 @@ tbody tr:last-child td {
   height: 28px;
   font-size: 10px;
   background: var(--md-surface-container-high);
-  border: 1px solid var(--md-outline);
+  border: 1px solid transparent;
   border-radius: var(--shape-sm);
   padding: 0 5px;
   transition: transform var(--duration-short) var(--motion-spring);
 }
 .skill-pill:hover {
   transform: scale(1.08);
-  border-color: var(--md-primary);
 }
 .skill-pill img {
   width: 26px;
@@ -1680,7 +1652,6 @@ tbody tr:last-child td {
   z-index: 1;
   background: transparent;
   border: none;
-  border-right: 1px solid var(--md-outline-variant);
   color: var(--text-dim);
   padding: 11px 16px;
   font-family: var(--font-display);
