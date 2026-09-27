@@ -9,7 +9,7 @@ const BASE = "https://api.opendota.com/api";
 // request-parse.yml, and the data branch's own README) - a permanent copy of
 // whatever OpenDota had at export/poll time, independent of OpenDota's own
 // API being up, rate-limited, or otherwise flaky.
-const DATA_BRANCH_ROOT = "https://raw.githubusercontent.com/ram-prices/dota-parser/data";
+const DATA_BRANCH_ROOT = "https://raw.githubusercontent.com/ram-prices/dota-dashboard/data";
 const DATA_BRANCH_MATCHES = `${DATA_BRANCH_ROOT}/matches`;
 const DATA_BRANCH_INDEX = `${DATA_BRANCH_ROOT}/matches-index.json`;
 const DATA_BRANCH_EXTRAS_INDEX = `${DATA_BRANCH_ROOT}/match-extras-index.json`;

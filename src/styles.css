@@ -1,37 +1,43 @@
 /* ============================================================
-   Design tokens - Material 3 "Expressive"-inspired dark theme
+   Design tokens - Dota 2 (dota2.com) inspired dark theme:
+   near-black charcoal/slate surfaces, flat translucent-black panels
+   with hairline borders and soft black shadows, squared-off corners,
+   serif uppercase display type with wide tracking, slate-blue labels,
+   and a red-orange accent (the dota2.com nav underline).
    ============================================================ */
 :root {
-  /* Color roles */
-  --md-primary: #cfbcff;
-  --md-on-primary: #35235c;
-  --md-primary-container: #4a3474;
-  --md-on-primary-container: #e9ddff;
+  /* Accent roles. The --md-* names are historical (from the previous
+     Material theme) - kept so every rule below that references them
+     picks up the new palette without renaming anything. */
+  --md-primary: #ff6046;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #5a1f16;
+  --md-on-primary-container: #ffd6cc;
 
-  --md-secondary: #7fe0d6;
-  --md-on-secondary: #003733;
-  --md-secondary-container: #17534d;
-  --md-on-secondary-container: #a2fff2;
+  --md-secondary: #c8a45c;
+  --md-on-secondary: #1a1408;
+  --md-secondary-container: #3d3220;
+  --md-on-secondary-container: #f0dcaf;
 
-  --md-tertiary: #ffb787;
-  --md-on-tertiary: #4a2600;
-  --md-tertiary-container: #6b3a06;
-  --md-on-tertiary-container: #ffddc0;
+  --md-tertiary: #e8b64a;
+  --md-on-tertiary: #2a1e00;
+  --md-tertiary-container: #4a3a10;
+  --md-on-tertiary-container: #ffe3a3;
 
-  --md-error: #ffb4ab;
+  --md-error: #ff8a78;
 
-  /* Surfaces (dark) */
-  --md-surface-dim: #0b0b10;
-  --md-surface: #131318;
-  --md-surface-container-lowest: #08080c;
-  --md-surface-container-low: #17171e;
-  --md-surface-container: #1c1c24;
-  --md-surface-container-high: #26262f;
-  --md-surface-container-highest: #31313b;
-  --md-on-surface: #e7e1eb;
-  --md-on-surface-variant: #9c96a5;
-  --md-outline: #4d4757;
-  --md-outline-variant: #2c2933;
+  /* Surfaces */
+  --md-surface-dim: #0b0c0e;
+  --md-surface: #121417;
+  --md-surface-container-lowest: #07080a;
+  --md-surface-container-low: #15181b;
+  --md-surface-container: #1a1d20;
+  --md-surface-container-high: #25282a;
+  --md-surface-container-highest: #303437;
+  --md-on-surface: #ffffff;
+  --md-on-surface-variant: #808fa6;
+  --md-outline: #4a5058;
+  --md-outline-variant: #2c2f33;
 
   /* Legacy aliases kept so nothing needs renaming everywhere */
   --bg: var(--md-surface-dim);
@@ -40,38 +46,52 @@
   --border: var(--md-outline-variant);
   --text: var(--md-on-surface);
   --text-dim: var(--md-on-surface-variant);
+  --text-soft: #cacaca;
   --accent: var(--md-primary);
 
-  /* Dota-semantic colors (kept independent of the M3 role colors,
-     since these map to actual game teams, not generic UI meaning) */
-  --radiant: #6bd58c;
-  --dire: #ff7a70;
-  --ward-obs: #e0c341;
-  --ward-sen: #5b9ee8;
+  /* dota2.com's panel treatment: a translucent black gradient over the
+     page background, hairline dark border, wide soft black shadow. */
+  --panel-bg: linear-gradient(80deg, rgba(37, 39, 40, 0.92) 0%, rgba(16, 20, 21, 0.92) 100%);
+  --panel-bg-subtle: linear-gradient(to right, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3));
+  --panel-border: 1px solid rgba(0, 0, 0, 0.6);
+  --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 
-  /* Shape scale */
-  --shape-xs: 8px;
-  --shape-sm: 12px;
-  --shape-md: 16px;
-  --shape-lg: 20px;
-  --shape-xl: 28px;
-  --shape-full: 999px;
+  /* Dota-semantic colors - the in-game Radiant green / Dire red,
+     brightened slightly for text contrast on dark panels. */
+  --radiant: #92c83e;
+  --dire: #e5553d;
+  --ward-obs: #e8c547;
+  --ward-sen: #5ba8e8;
 
-  /* Elevation (tinted shadows, M3-style) */
-  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(180, 150, 255, 0.06);
-  --elevation-2: 0 2px 6px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(180, 150, 255, 0.1);
-  --elevation-3: 0 8px 20px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(180, 150, 255, 0.14);
+  /* Shape scale - dota2.com is squared off: 0-5px everywhere. */
+  --shape-xs: 2px;
+  --shape-sm: 3px;
+  --shape-md: 4px;
+  --shape-lg: 5px;
+  --shape-xl: 6px;
+  --shape-full: 3px;
 
-  /* Motion */
-  --motion-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Elevation - neutral black shadows, like dota2.com's 0 0 30px panels */
+  --elevation-1: 0 0 20px rgba(0, 0, 0, 0.3);
+  --elevation-2: 0 0 30px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
+  --elevation-3: 0 0 40px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.6);
+
+  /* Motion - calmer than before: dota2.com eases and fades, it doesn't bounce */
+  --motion-spring: cubic-bezier(0.25, 0.8, 0.25, 1);
   --motion-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-emphasized: cubic-bezier(0.3, 0, 0.4, 1);
   --duration-short: 150ms;
-  --duration-medium: 280ms;
+  --duration-medium: 250ms;
   --duration-long: 450ms;
 
-  --font-display: "Outfit", "Segoe UI", sans-serif;
-  --font-body: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Reaver / Radiance (dota2.com's faces) are Valve-proprietary; Cinzel
+     is the closest freely licensed flared-serif caps display face, and
+     Noto Sans is what dota2.com itself falls back to for body text. */
+  --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+  --font-body: "Noto Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  /* Uppercase tracked label style (dota2.com's "ATTRIBUTE", "COMPLEXITY") */
+  --label-tracking: 0.12em;
 }
 
 /* ============================================================
@@ -107,12 +127,16 @@ html {
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* Approximates dota2.com's "greyfade" backdrop: near-black at the
+     edges with a cold slate haze toward the top right. Fixed so long
+     pages scroll over it the way dota2.com's content does. */
+  background-color: var(--bg);
   background-image:
-    radial-gradient(circle at 12% -10%, color-mix(in srgb, var(--md-primary) 14%, transparent), transparent 45%),
-    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--md-secondary) 10%, transparent), transparent 40%);
+    radial-gradient(ellipse 70% 55% at 78% 0%, rgba(120, 136, 150, 0.22), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 10% 15%, rgba(70, 80, 92, 0.18), transparent 70%),
+    linear-gradient(180deg, #1c2024 0%, #111316 45%, #0a0b0d 100%);
   background-attachment: fixed;
-  color: var(--text);
+  color: var(--text-soft);
   font-family: var(--font-body);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
@@ -121,26 +145,56 @@ body {
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 a {
-  color: var(--md-primary);
+  color: var(--text);
   text-decoration: none;
   transition: color var(--duration-short) var(--motion-standard);
 }
 a:hover {
-  color: var(--md-on-primary-container);
+  color: var(--md-primary);
 }
 
 :focus-visible {
-  outline: 2px solid var(--md-primary);
+  outline: 1px solid var(--md-primary);
   outline-offset: 2px;
   border-radius: var(--shape-xs);
 }
 
 button {
   font-family: var(--font-body);
+}
+
+/* Default button - dota2.com's "PLAY FOR FREE" treatment: translucent
+   dark fill, light hairline border, uppercase tracked label, brightens
+   on hover. Specific buttons (tabs, chips, primary) override below. */
+button {
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 9px 18px;
+  border-radius: var(--shape-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  transition:
+    background var(--duration-short) var(--motion-standard),
+    border-color var(--duration-short) var(--motion-standard),
+    color var(--duration-short) var(--motion-standard);
+}
+:where(button:hover:not(:disabled)) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+:where(button:disabled) {
+  opacity: 0.45;
+  cursor: default;
 }
 
 /* ============================================================
@@ -151,38 +205,34 @@ button {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 14px 28px;
-  background: color-mix(in srgb, var(--md-surface-container) 88%, transparent);
-  backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--md-outline-variant);
+  gap: 12px 28px;
+  padding: 14px 32px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.6));
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 .brand {
   font-family: var(--font-display);
-  font-size: 21px;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.01em;
-  background: linear-gradient(135deg, var(--md-primary), var(--md-secondary) 70%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  transition: filter var(--duration-short) var(--motion-standard);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 .brand:hover {
-  filter: brightness(1.2);
+  color: var(--text);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.25);
 }
 
 .app-header nav {
   display: flex;
   flex-wrap: nowrap;
-  gap: 2px;
-  background: var(--md-surface-container-low);
-  padding: 4px;
-  border-radius: var(--shape-full);
-  border: 1px solid var(--md-outline-variant);
+  gap: 26px;
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: none;
@@ -191,30 +241,40 @@ button {
 .app-header nav::-webkit-scrollbar {
   display: none;
 }
+/* dota2.com nav: serif caps, wide tracking, soft grey that goes white on
+   hover, and a red-orange underline under the current page. */
 .app-header nav a {
   position: relative;
-  color: var(--text-dim);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: var(--shape-full);
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 6px 0;
   white-space: nowrap;
   flex-shrink: 0;
-  transition:
-    color var(--duration-short) var(--motion-standard),
-    background var(--duration-medium) var(--motion-spring),
-    transform var(--duration-short) var(--motion-spring);
+  transition: color var(--duration-short) var(--motion-standard);
+}
+.app-header nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--md-primary);
+  transform: scaleX(0);
+  transition: transform var(--duration-medium) var(--motion-standard);
 }
 .app-header nav a:hover {
   color: var(--text);
-  background: var(--md-surface-container-high);
-}
-.app-header nav a:active {
-  transform: scale(0.94);
 }
 .app-header nav a.nav-active {
-  color: var(--md-on-primary-container);
-  background: var(--md-primary-container);
+  color: var(--text);
+}
+.app-header nav a.nav-active::after {
+  transform: scaleX(1);
 }
 
 .app-main {
@@ -272,8 +332,8 @@ button {
   content: "";
   width: 18px;
   height: 18px;
-  border-radius: var(--shape-full);
-  border: 3px solid var(--md-outline-variant);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.12);
   border-top-color: var(--md-primary);
   animation: spin 0.8s linear infinite;
 }
@@ -287,9 +347,10 @@ button {
   padding: 48px 24px;
   text-align: center;
   color: var(--text-dim);
-  background: var(--md-surface-container);
+  background: var(--panel-bg);
+  border: var(--panel-border);
   border-radius: var(--shape-lg);
-  border: 1px solid var(--md-outline-variant);
+  box-shadow: var(--elevation-1);
 }
 
 .error-box {
@@ -328,15 +389,19 @@ button {
 .toolbar select {
   background: var(--md-surface-container-high);
   color: var(--text);
-  border: 1px solid var(--md-outline-variant);
+  border: 1px solid rgba(0, 0, 0, 0.5);
   padding: 8px 14px;
-  border-radius: var(--shape-full);
+  border-radius: var(--shape-sm);
+  font-family: var(--font-body);
+  font-size: 12px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   cursor: pointer;
   transition: border-color var(--duration-short) var(--motion-standard);
 }
 .toolbar select:hover {
-  border-color: var(--md-primary);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 .match-filters {
   justify-content: flex-start;
@@ -349,11 +414,13 @@ button {
 .filter-chip {
   background: var(--md-surface-container-high);
   color: var(--text-dim);
-  border: 1px solid var(--md-outline-variant);
+  border: 1px solid rgba(0, 0, 0, 0.5);
   padding: 7px 13px;
-  border-radius: var(--shape-full);
-  font-weight: 600;
-  font-size: 13px;
+  border-radius: var(--shape-sm);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   cursor: pointer;
   transition:
     background var(--duration-short) var(--motion-standard),
@@ -361,11 +428,12 @@ button {
     border-color var(--duration-short) var(--motion-standard);
 }
 .filter-chip:hover {
-  border-color: var(--md-primary);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 .filter-chip-active {
-  background: var(--md-primary-container);
-  color: var(--md-on-primary-container);
+  background: color-mix(in srgb, var(--md-primary) 18%, var(--md-surface-container-high));
+  color: var(--text);
   border-color: var(--md-primary);
 }
 
@@ -386,8 +454,8 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: var(--md-primary-container);
-  color: var(--md-on-primary-container);
+  background: color-mix(in srgb, var(--md-primary) 18%, var(--md-surface-container-high));
+  color: var(--text);
   border: 1px solid var(--md-primary);
   padding: 3px 6px 3px 3px;
   border-radius: var(--shape-full);
@@ -403,6 +471,7 @@ button {
 .hero-chip-remove {
   background: none;
   border: none;
+  border-radius: 0;
   color: inherit;
   font-size: 15px;
   line-height: 1;
@@ -421,10 +490,10 @@ button {
 table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--md-surface-container);
+  background: var(--panel-bg);
   border-radius: var(--shape-lg);
   margin-bottom: 20px;
-  border: 1px solid var(--md-outline-variant);
+  border: var(--panel-border);
   box-shadow: var(--elevation-1);
   /* Wide data tables (scoreboard, match lists, logs) can be wider than
      their container at any viewport size, not just on phones - always
@@ -440,22 +509,23 @@ th,
 td {
   padding: 10px 14px;
   text-align: left;
-  border-bottom: 1px solid var(--md-outline-variant);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   white-space: nowrap;
 }
 th {
   color: var(--text-dim);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 11px;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--label-tracking);
   text-transform: uppercase;
-  background: var(--md-surface-container-high);
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
 }
 tbody tr {
   transition: background var(--duration-short) var(--motion-standard);
 }
 tbody tr:hover {
-  background: var(--md-surface-container-high);
+  background: rgba(255, 255, 255, 0.04);
 }
 tbody tr:last-child td {
   border-bottom: none;
@@ -503,10 +573,10 @@ tbody tr:last-child td {
   font-weight: 800;
 }
 .match-list tr.row-win:hover {
-  background: color-mix(in srgb, var(--radiant) 8%, var(--md-surface-container));
+  background: color-mix(in srgb, var(--radiant) 9%, transparent);
 }
 .match-list tr.row-loss:hover {
-  background: color-mix(in srgb, var(--dire) 8%, var(--md-surface-container));
+  background: color-mix(in srgb, var(--dire) 9%, transparent);
 }
 
 .hero-cell {
@@ -519,7 +589,8 @@ tbody tr:last-child td {
   height: 26px;
   border-radius: var(--shape-xs);
   vertical-align: middle;
-  box-shadow: var(--elevation-1);
+  /* dota2.com hero portraits: hard black drop shadow */
+  box-shadow: 1px 1px 4px #000;
 }
 .hero-icon-cell {
   /* Pinned via width = min-width = max-width so the rendered size is
@@ -571,13 +642,13 @@ tbody tr:last-child td {
   transition: background var(--duration-short) var(--motion-standard);
 }
 .match-row:hover {
-  background: var(--md-surface-container-high);
+  background: rgba(255, 255, 255, 0.04);
 }
 .match-row.row-win:hover {
-  background: color-mix(in srgb, var(--radiant) 8%, var(--md-surface-container));
+  background: color-mix(in srgb, var(--radiant) 9%, transparent);
 }
 .match-row.row-loss:hover {
-  background: color-mix(in srgb, var(--dire) 8%, var(--md-surface-container));
+  background: color-mix(in srgb, var(--dire) 9%, transparent);
 }
 .match-row-link {
   position: absolute;
@@ -745,20 +816,23 @@ tbody tr:last-child td {
   margin-bottom: 22px;
 }
 .match-header h2 {
-  font-size: 30px;
+  font-size: 34px;
+  letter-spacing: 0.1em;
   margin: 0 0 4px;
 }
 .match-header h2.radiant-won {
   color: var(--radiant);
-  text-shadow: 0 0 24px color-mix(in srgb, var(--radiant) 40%, transparent);
+  text-shadow: 0 0 24px color-mix(in srgb, var(--radiant) 35%, transparent), 0 2px 4px #000;
 }
 .match-header h2.dire-won {
   color: var(--dire);
-  text-shadow: 0 0 24px color-mix(in srgb, var(--dire) 40%, transparent);
+  text-shadow: 0 0 24px color-mix(in srgb, var(--dire) 35%, transparent), 0 2px 4px #000;
 }
 .match-meta {
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .scoreboard.team-radiant thead th:first-of-type {
@@ -776,13 +850,13 @@ tbody tr:last-child td {
   position: sticky;
   left: 0;
   z-index: 3;
-  background: var(--md-surface-container-high);
+  background: #0f1112;
 }
 .scoreboard tbody .hero-icon-cell,
 .scoreboard tbody .hero-name-cell {
   position: sticky;
   z-index: 2;
-  background: var(--md-surface-container);
+  background: #1f2223;
 }
 .scoreboard tbody .hero-icon-cell {
   left: 0;
@@ -867,8 +941,8 @@ tbody tr:last-child td {
    Charts
    ============================================================ */
 .chart {
-  background: var(--md-surface-container);
-  border: 1px solid var(--md-outline-variant);
+  background: var(--panel-bg);
+  border: var(--panel-border);
   border-radius: var(--shape-lg);
   padding: 20px;
   margin-bottom: 16px;
@@ -878,21 +952,21 @@ tbody tr:last-child td {
     box-shadow var(--duration-medium) var(--motion-standard);
 }
 .chart:hover {
-  transform: translateY(-2px);
   box-shadow: var(--elevation-2);
 }
 .chart h3 {
-  margin: 0 0 10px;
-  font-size: 14px;
-  color: var(--text-dim);
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--text);
   font-weight: 700;
+  letter-spacing: 0.1em;
 }
 .chart-svg {
   width: 100%;
   height: auto;
 }
 .chart-axis {
-  stroke: var(--md-outline-variant);
+  stroke: rgba(255, 255, 255, 0.12);
   stroke-width: 1;
 }
 .chart-line {
@@ -912,9 +986,11 @@ tbody tr:last-child td {
 .chart-legend {
   display: flex;
   gap: 16px;
-  font-size: 12px;
+  font-size: 11px;
   margin-top: 8px;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
 }
 .legend-radiant {
   color: var(--radiant);
@@ -944,7 +1020,7 @@ tbody tr:last-child td {
 }
 .hero-overview-row {
   padding: 14px 0;
-  border-bottom: 1px solid var(--md-outline-variant);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .hero-overview-row:last-child {
   border-bottom: none;
@@ -955,6 +1031,7 @@ tbody tr:last-child td {
   align-items: center;
   gap: 8px;
   font-weight: 700;
+  color: var(--text);
   margin-bottom: 10px;
 }
 .hero-overview-stats {
@@ -968,11 +1045,12 @@ tbody tr:last-child td {
 .hero-overview-value {
   font-weight: 700;
   font-size: 15px;
+  color: var(--text);
 }
 .hero-overview-bar-track {
   height: 4px;
   border-radius: var(--shape-full);
-  background: var(--md-surface-container-high);
+  background: rgba(0, 0, 0, 0.5);
   overflow: hidden;
   margin: 4px 0;
 }
@@ -982,19 +1060,19 @@ tbody tr:last-child td {
   transition: width var(--duration-long) var(--motion-spring);
 }
 .hero-overview-bar-matches {
-  background: #ef5350;
+  background: var(--md-primary);
 }
 .hero-overview-bar-winrate {
   background: var(--radiant);
 }
 .hero-overview-bar-kda {
-  background: #ffa726;
+  background: var(--md-tertiary);
 }
 .hero-overview-label {
   color: var(--text-dim);
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--label-tracking);
   font-weight: 700;
 }
 .hero-overview-lane {
@@ -1010,7 +1088,7 @@ tbody tr:last-child td {
   height: 6px;
   border-radius: var(--shape-full);
   overflow: hidden;
-  background: var(--md-surface-container-high);
+  background: rgba(0, 0, 0, 0.5);
 }
 .hero-overview-lane-segment {
   height: 100%;
@@ -1024,24 +1102,7 @@ tbody tr:last-child td {
 }
 .raw-toggle button,
 .pagination button {
-  background: var(--md-surface-container-high);
-  color: var(--text);
-  border: 1px solid var(--md-outline-variant);
   padding: 10px 18px;
-  border-radius: var(--shape-full);
-  cursor: pointer;
-  font-weight: 600;
-  transition:
-    background var(--duration-short) var(--motion-standard),
-    transform var(--duration-short) var(--motion-spring);
-}
-.raw-toggle button:hover,
-.pagination button:hover:not(:disabled) {
-  background: var(--md-surface-container-highest);
-}
-.raw-toggle button:active,
-.pagination button:active:not(:disabled) {
-  transform: scale(0.96);
 }
 .pagination {
   display: flex;
@@ -1053,23 +1114,20 @@ tbody tr:last-child td {
 }
 .pagination button {
   padding: 8px 14px;
-  font-size: 13px;
-}
-.pagination button:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 .pagination-page {
   color: var(--text-dim);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
   padding: 0 4px;
   white-space: nowrap;
 }
 .raw-json {
   margin-top: 10px;
-  background: var(--md-surface-container-lowest);
-  border: 1px solid var(--md-outline-variant);
+  background: rgba(0, 0, 0, 0.6);
+  border: var(--panel-border);
   border-radius: var(--shape-md);
   padding: 14px;
   max-height: 500px;
@@ -1100,15 +1158,17 @@ tbody tr:last-child td {
   text-align: right;
 }
 .avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: var(--shape-lg);
-  box-shadow: var(--elevation-2);
-  border: 2px solid var(--md-outline-variant);
+  width: 64px;
+  height: 64px;
+  border-radius: var(--shape-xs);
+  box-shadow: 1px 1px 6px #000;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 .profile-header h2 {
   margin: 0 0 4px;
-  font-size: 24px;
+  font-size: 30px;
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 6px #000;
 }
 
 /* Win/loss/win-rate/match-count summary row underneath the profile header
@@ -1119,8 +1179,8 @@ tbody tr:last-child td {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
-  background: var(--md-surface-container);
-  border: 1px solid var(--md-outline-variant);
+  background: var(--panel-bg);
+  border: var(--panel-border);
   border-radius: var(--shape-lg);
   padding: 16px 18px;
   margin-bottom: 20px;
@@ -1132,21 +1192,22 @@ tbody tr:last-child td {
 }
 .profile-stat-value {
   font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 22px;
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--text);
 }
 .profile-stat-label {
   color: var(--text-dim);
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--label-tracking);
   font-weight: 700;
   margin-top: 2px;
 }
 .profile-stat-bar-track {
   height: 4px;
   border-radius: var(--shape-full);
-  background: var(--md-surface-container-high);
+  background: rgba(0, 0, 0, 0.5);
   overflow: hidden;
   margin: 6px auto 0;
   max-width: 80px;
@@ -1167,12 +1228,10 @@ tbody tr:last-child td {
 .vs-stat {
   font-family: var(--font-display);
   font-size: 40px;
-  font-weight: 800;
+  font-weight: 700;
   margin: 4px 0;
-  background: linear-gradient(135deg, var(--md-primary), var(--md-secondary));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text);
+  text-shadow: 0 2px 8px #000;
   animation: pop-in var(--duration-medium) var(--motion-spring) both;
 }
 
@@ -1194,15 +1253,18 @@ tbody tr:last-child td {
 }
 .settings label {
   display: block;
-  font-weight: 700;
+  font-weight: 600;
   margin-bottom: 6px;
-  font-family: var(--font-display);
+  color: var(--text-dim);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
 }
 .settings input {
   width: 100%;
   background: var(--md-surface-container-high);
   color: var(--text);
-  border: 1px solid var(--md-outline-variant);
+  border: 1px solid rgba(0, 0, 0, 0.5);
   padding: 11px 16px;
   border-radius: var(--shape-md);
   font-size: 14px;
@@ -1212,7 +1274,7 @@ tbody tr:last-child td {
 }
 .settings input:focus {
   border-color: var(--md-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-primary) 25%, transparent);
+  box-shadow: 0 0 0 1px var(--md-primary);
   outline: none;
 }
 .settings .hint {
@@ -1222,37 +1284,28 @@ tbody tr:last-child td {
   line-height: 1.5;
 }
 .settings button {
-  background: var(--md-primary);
+  background: linear-gradient(180deg, #d9432c 0%, #a52a18 100%);
   color: var(--md-on-primary);
-  border: none;
-  padding: 11px 22px;
-  border-radius: var(--shape-full);
-  cursor: pointer;
-  font-weight: 700;
-  box-shadow: var(--elevation-1);
-  transition:
-    transform var(--duration-short) var(--motion-spring),
-    box-shadow var(--duration-short) var(--motion-standard),
-    background var(--duration-short) var(--motion-standard);
+  border: 1px solid #ff6046;
+  padding: 11px 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 .settings button:hover:not(:disabled) {
-  box-shadow: var(--elevation-2);
-  transform: translateY(-1px);
-}
-.settings button:active:not(:disabled) {
-  transform: scale(0.96);
-}
-.settings button:disabled {
-  opacity: 0.6;
-  cursor: default;
+  background: linear-gradient(180deg, #ef5a41 0%, #bb321d 100%);
+  border-color: #ff8a73;
 }
 .settings button.danger {
-  background: color-mix(in srgb, var(--md-error) 85%, var(--md-surface));
-  color: #3a0a05;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--md-error);
+  border-color: color-mix(in srgb, var(--md-error) 60%, transparent);
+}
+.settings button.danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--md-error) 12%, transparent);
+  border-color: var(--md-error);
 }
 .settings hr {
   border: none;
-  border-top: 1px solid var(--md-outline-variant);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   margin: 28px 0;
 }
 .status-ok {
@@ -1281,8 +1334,8 @@ tbody tr:last-child td {
   margin-bottom: 12px;
 }
 .lane-card {
-  background: var(--md-surface-container);
-  border: 1px solid var(--md-outline-variant);
+  background: var(--panel-bg);
+  border: var(--panel-border);
   border-radius: var(--shape-lg);
   padding: 16px 18px;
   box-shadow: var(--elevation-1);
@@ -1328,7 +1381,7 @@ tbody tr:last-child td {
   gap: 14px;
 }
 .lane-h2h-pair {
-  background: var(--md-surface-container-high);
+  background: rgba(0, 0, 0, 0.35);
   border-radius: var(--shape-md);
   overflow: hidden;
 }
@@ -1340,7 +1393,7 @@ tbody tr:last-child td {
   padding: 8px 14px;
 }
 .lane-h2h-row:not(:last-child) {
-  border-bottom: 1px solid var(--md-outline-variant);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 .lane-h2h-row-header {
   padding: 10px 14px;
@@ -1368,8 +1421,10 @@ tbody tr:last-child td {
 .lane-h2h-label {
   text-align: center;
   color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
 }
 .lane-compare {
   margin-top: 14px;
@@ -1398,7 +1453,7 @@ tbody tr:last-child td {
   height: 6px;
   border-radius: var(--shape-full);
   overflow: hidden;
-  background: var(--md-surface-container-high);
+  background: rgba(0, 0, 0, 0.5);
 }
 .lane-compare-fill-radiant {
   background: var(--radiant);
@@ -1413,8 +1468,8 @@ tbody tr:last-child td {
    Collapsible sections
    ============================================================ */
 .section {
-  background: var(--md-surface-container);
-  border: 1px solid var(--md-outline-variant);
+  background: var(--panel-bg);
+  border: var(--panel-border);
   border-radius: var(--shape-lg);
   padding: 14px 18px;
   margin-bottom: 12px;
@@ -1428,6 +1483,8 @@ tbody tr:last-child td {
   font-weight: 700;
   color: var(--text);
   font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   list-style: none;
   display: flex;
   align-items: center;
@@ -1464,7 +1521,7 @@ tbody tr:last-child td {
   width: 100%;
   background: var(--md-surface-container-high);
   color: var(--text);
-  border: 1px solid var(--md-outline-variant);
+  border: 1px solid rgba(0, 0, 0, 0.5);
   padding: 10px 16px;
   border-radius: var(--shape-md);
   margin: 12px 0;
@@ -1484,7 +1541,7 @@ tbody tr:last-child td {
   align-items: center;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--md-outline-variant);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .skill-build-row:last-child {
   border-bottom: none;
@@ -1501,15 +1558,15 @@ tbody tr:last-child td {
   min-width: 28px;
   height: 28px;
   font-size: 10px;
-  background: var(--md-surface-container-high);
-  border: 1px solid var(--md-outline-variant);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(0, 0, 0, 0.7);
   border-radius: var(--shape-sm);
   padding: 0 5px;
   transition: transform var(--duration-short) var(--motion-spring);
 }
 .skill-pill:hover {
-  transform: translateY(-2px) scale(1.08);
-  border-color: var(--md-primary);
+  transform: scale(1.08);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 .skill-pill img {
   width: 26px;
@@ -1569,11 +1626,12 @@ tbody tr:last-child td {
   position: relative;
   display: flex;
   flex-wrap: nowrap;
-  gap: 2px;
-  background: var(--md-surface-container-low);
-  border: 1px solid var(--md-outline-variant);
-  padding: 4px;
-  border-radius: var(--shape-full);
+  gap: 4px;
+  background: var(--panel-bg-subtle);
+  border: var(--panel-border);
+  box-shadow: var(--elevation-1);
+  padding: 0 8px;
+  border-radius: var(--shape-lg);
   margin-bottom: 20px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -1584,11 +1642,11 @@ tbody tr:last-child td {
 }
 .tab-indicator {
   position: absolute;
-  top: 4px;
-  bottom: 4px;
+  bottom: 0;
+  height: 3px;
   left: 0;
   background: var(--md-primary);
-  border-radius: var(--shape-full);
+  border-radius: 0;
   transition:
     transform var(--duration-medium) var(--motion-spring),
     width var(--duration-medium) var(--motion-spring);
@@ -1600,11 +1658,13 @@ tbody tr:last-child td {
   background: transparent;
   border: none;
   color: var(--text-dim);
-  padding: 9px 16px;
+  padding: 13px 14px;
+  font-family: var(--font-display);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   cursor: pointer;
-  border-radius: var(--shape-full);
+  border-radius: 0;
   white-space: nowrap;
   flex-shrink: 0;
   transition:
@@ -1615,11 +1675,7 @@ tbody tr:last-child td {
   color: var(--text);
 }
 .tab-btn.active {
-  color: var(--md-on-primary);
-  font-weight: 700;
-}
-.tab-btn:active {
-  transform: scale(0.95);
+  color: var(--text);
 }
 .tab-panel {
   animation: tab-in var(--duration-medium) var(--motion-emphasized) both;
@@ -1639,7 +1695,7 @@ tbody tr:last-child td {
   font-size: 12px;
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--label-tracking);
 }
 .two-col {
   display: grid;
@@ -1663,7 +1719,7 @@ tbody tr:last-child td {
   font-size: 12px;
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--label-tracking);
 }
 .pretty-dl {
   margin: 0;
@@ -1673,7 +1729,7 @@ tbody tr:last-child td {
   display: flex;
   gap: 10px;
   padding: 5px 0;
-  border-bottom: 1px solid var(--md-outline-variant);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   align-items: baseline;
 }
 .pretty-row dt {
@@ -1700,7 +1756,7 @@ tbody tr:last-child td {
 .pretty-row .pretty-list {
   margin-top: 4px;
   padding: 8px 12px;
-  background: var(--md-surface-container-high);
+  background: rgba(0, 0, 0, 0.35);
   border-radius: var(--shape-sm);
 }
 .pretty-list {
