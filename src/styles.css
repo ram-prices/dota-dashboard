@@ -683,6 +683,13 @@ tbody tr:last-child td {
   .match-table .match-row-duration-cell {
     padding-right: 12px;
   }
+  /* Nine columns on a phone: tighter cells so the table fits without
+     scrolling sideways. */
+  .match-table td,
+  .match-table th {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
 }
 .match-row-hero {
   display: flex;
@@ -765,6 +772,13 @@ tbody tr:last-child td {
   min-width: 34px;
   padding-left: 4px;
   padding-right: 4px;
+}
+@media (max-width: 640px) {
+  .match-table .match-row-kda-cell {
+    min-width: 22px;
+    padding-left: 2px;
+    padding-right: 2px;
+  }
 }
 .match-row-stacked {
   display: flex;
