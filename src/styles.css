@@ -1075,6 +1075,18 @@ tbody tr:last-child td {
 .scoreboard-items-cell {
   min-width: 236px;
 }
+/* Same idea for the number columns, which otherwise size to their widest
+   value (e.g. a 1- vs 2-digit kill count, 4- vs 5-digit hero healing)
+   and drift out of line between the two tables. Body cells only - the
+   header row's first cell spans two columns, so its nth-child indices
+   don't line up with these. */
+.scoreboard td.scoreboard-kda-cell {
+  min-width: 26px;
+}
+.scoreboard td:nth-child(7),
+.scoreboard td:nth-child(n + 15) {
+  min-width: 72px; /* NW, HD, HL, TD - up to 6 digits */
+}
 
 /* ============================================================
    Charts
