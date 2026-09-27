@@ -48,6 +48,15 @@ export interface MatchExtras {
   patch?: number;
 }
 
+// One match-players-index.json entry (see .github/scripts/match-players.jq):
+// every non-anonymous player as [account_id, is_radiant (1/0), hero_id,
+// personaname].
+export type MatchPlayerTuple = [accountId: number, radiant: 0 | 1, heroId: number, personaname: string | null];
+export interface MatchPlayersEntry {
+  match_id: number;
+  players: MatchPlayerTuple[];
+}
+
 export interface HeroStat {
   hero_id: number;
   last_played: number;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getPeers, OpenDotaError } from "../opendota";
+import { errorMessage, getPeers } from "../opendota";
 import type { PeerStat } from "../types";
 import { formatRelativeTime } from "../dota";
 
@@ -15,8 +15,10 @@ export function Peers({ accountId }: { accountId: number }) {
 
   useEffect(() => {
     getPeers(accountId)
-      .then((p) => setPeers([...p].sort((a, b) => b.games - a.games)))
-      .catch((e) => setError(e instanceof OpenDotaError ? e.message : String(e)));
+      // Everyone you've shared a single random match with would be
+      // thousands of rows of noise - only people seen at least twice.
+      .then((p) => setPeers(p.filter((x) => x.games >= 2).sort((a, b) => b.games - a.games)))
+      .catch((e) => setError(errorMessage(e)));
   }, [accountId]);
 
   if (error) return <div className="error-box">{error}</div>;
@@ -26,13 +28,14 @@ export function Peers({ accountId }: { accountId: number }) {
     <div>
       <h2>Teammates</h2>
       <p className="text-dim">
-        Lifetime stats with and against everyone you've been matched with. Click a name for the full breakdown.
+        Lifetime stats with and against everyone you've played at least two matches with or against (players
+        with private profiles aren't included). Click a name for the full breakdown.
       </p>
       <table className="match-list">
         <thead>
           <tr>
             <th>Player</th>
-            <th>Games together</th>
+            <th>Games as teammates</th>
             <th>Win rate as teammates</th>
             <th>Win rate as opponents</th>
             <th>Last played</th>
@@ -45,8 +48,8 @@ export function Peers({ accountId }: { accountId: number }) {
                 {p.avatar && <img src={p.avatar} alt="" className="hero-icon" />}
                 <Link to={`/vs/${p.account_id}`}>{p.personaname ?? `Account ${p.account_id}`}</Link>
               </td>
-              <td>{p.with_games ?? p.games}</td>
-              <td>{pct(p.with_win ?? p.win, p.with_games ?? p.games)}</td>
+              <td>{p.with_games}</td>
+              <td>{p.with_games ? `${pct(p.with_win, p.with_games)}` : "-"}</td>
               <td>
                 {p.against_games ? `${pct(p.against_win, p.against_games)} (${p.against_games})` : "-"}
               </td>

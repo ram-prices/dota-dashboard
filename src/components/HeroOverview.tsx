@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getHeroStats, getMatchIndexForStats, OpenDotaError } from "../opendota";
+import { errorMessage, getHeroStats, getMatchIndexForStats } from "../opendota";
 import { heroIcon, heroName } from "../dota";
 
 const TOP_N = 5;
@@ -14,12 +14,13 @@ const LANE_NAMES: Record<number, string> = {
   3: "Off Lane",
   4: "Jungle",
 };
+// The pastel palette from styles.css (--pastel-*)
 const LANE_COLORS: Record<number, string> = {
-  0: "#5a5a63",
-  1: "#7fe0d6",
-  2: "#ffcf6b",
-  3: "#c9a6ff",
-  4: "#9aa0ab",
+  0: "var(--md-outline)",
+  1: "var(--pastel-sky)",
+  2: "var(--pastel-butter)",
+  3: "var(--pastel-peach)",
+  4: "var(--pastel-lavender)",
 };
 
 interface HeroRow {
@@ -41,28 +42,23 @@ export function HeroOverview({ accountId, showMoreLink = true }: { accountId: nu
     setRows(null);
     setError(null);
 
-    Promise.all([getHeroStats(accountId), getMatchIndexForStats()])
+    Promise.all([getHeroStats(), getMatchIndexForStats()])
       .then(([heroStats, index]) => {
-        // Matches/win totals always come from OpenDota's own aggregated
-        // /heroes endpoint (exact, all-time). KDA and the lane breakdown
-        // come from the lightweight match index instead, when it's
-        // available - already fetched for the Matches tab, so this widget
-        // doesn't cost any extra requests, but it means those two numbers
-        // are only as complete as the index is.
+        // Matches/win totals, KDA and the lane breakdown all come from
+        // the stored match index - already fetched for the Matches tab,
+        // so this widget doesn't cost any extra requests.
         const extra = new Map<number, { kills: number; deaths: number; assists: number; lanes: Record<number, number> }>();
-        if (index) {
-          for (const m of index) {
-            let e = extra.get(m.hero_id);
-            if (!e) {
-              e = { kills: 0, deaths: 0, assists: 0, lanes: {} };
-              extra.set(m.hero_id, e);
-            }
-            e.kills += m.kills;
-            e.deaths += m.deaths;
-            e.assists += m.assists;
-            const lane = m.lane_role ?? 0;
-            e.lanes[lane] = (e.lanes[lane] ?? 0) + 1;
+        for (const m of index) {
+          let e = extra.get(m.hero_id);
+          if (!e) {
+            e = { kills: 0, deaths: 0, assists: 0, lanes: {} };
+            extra.set(m.hero_id, e);
           }
+          e.kills += m.kills;
+          e.deaths += m.deaths;
+          e.assists += m.assists;
+          const lane = m.lane_role ?? 0;
+          e.lanes[lane] = (e.lanes[lane] ?? 0) + 1;
         }
 
         const built: HeroRow[] = heroStats
@@ -85,7 +81,7 @@ export function HeroOverview({ accountId, showMoreLink = true }: { accountId: nu
 
         setRows(built);
       })
-      .catch((e) => setError(e instanceof OpenDotaError ? e.message : String(e)));
+      .catch((e) => setError(errorMessage(e)));
   }, [accountId]);
 
   // Non-critical widget - fail quietly rather than blocking the whole

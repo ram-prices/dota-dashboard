@@ -1,43 +1,50 @@
 /* ============================================================
-   Design tokens - Dota 2 (dota2.com) inspired dark theme:
-   near-black charcoal/slate surfaces, flat translucent-black panels
-   with hairline borders and soft black shadows, squared-off corners,
-   serif uppercase display type with wide tracking, slate-blue labels,
-   and a red-orange accent (the dota2.com nav underline).
+   Design tokens - flat, boxy dark theme (DOTABUFF-inspired layout)
+   with a pastel accent palette: dark slate surfaces stacked in simple
+   rectangular panels with solid header strips, striped tables, and soft
+   pastel colors for state and meaning.
    ============================================================ */
 :root {
-  /* Accent roles. The --md-* names are historical (from the previous
+  /* Pastel palette */
+  --pastel-lavender: #b9b4ff;
+  --pastel-mint: #9ee6c4;
+  --pastel-rose: #ffa3a8;
+  --pastel-peach: #ffc79e;
+  --pastel-butter: #f4dc8f;
+  --pastel-sky: #9fd0ff;
+
+  /* Accent roles. The --md-* names are historical (from the original
      Material theme) - kept so every rule below that references them
-     picks up the new palette without renaming anything. */
-  --md-primary: #ff6046;
-  --md-on-primary: #ffffff;
-  --md-primary-container: #5a1f16;
-  --md-on-primary-container: #ffd6cc;
+     picks up the palette without renaming anything. */
+  --md-primary: var(--pastel-lavender);
+  --md-on-primary: #1b1a33;
+  --md-primary-container: #34335a;
+  --md-on-primary-container: #e4e1ff;
 
-  --md-secondary: #c8a45c;
-  --md-on-secondary: #1a1408;
-  --md-secondary-container: #3d3220;
-  --md-on-secondary-container: #f0dcaf;
+  --md-secondary: var(--pastel-sky);
+  --md-on-secondary: #0f2233;
+  --md-secondary-container: #243a50;
+  --md-on-secondary-container: #d8ecff;
 
-  --md-tertiary: #e8b64a;
-  --md-on-tertiary: #2a1e00;
-  --md-tertiary-container: #4a3a10;
-  --md-on-tertiary-container: #ffe3a3;
+  --md-tertiary: var(--pastel-peach);
+  --md-on-tertiary: #3a2210;
+  --md-tertiary-container: #4d3524;
+  --md-on-tertiary-container: #ffe6d4;
 
-  --md-error: #ff8a78;
+  --md-error: var(--pastel-rose);
 
-  /* Surfaces */
-  --md-surface-dim: #0b0c0e;
-  --md-surface: #121417;
-  --md-surface-container-lowest: #07080a;
-  --md-surface-container-low: #15181b;
-  --md-surface-container: #1a1d20;
-  --md-surface-container-high: #25282a;
-  --md-surface-container-highest: #303437;
-  --md-on-surface: #ffffff;
-  --md-on-surface-variant: #808fa6;
-  --md-outline: #4a5058;
-  --md-outline-variant: #2c2f33;
+  /* Surfaces, darkest to lightest */
+  --md-surface-dim: #13171c;
+  --md-surface: #171c22;
+  --md-surface-container-lowest: #101418;
+  --md-surface-container-low: #1b2128;
+  --md-surface-container: #1f262e;
+  --md-surface-container-high: #29313a;
+  --md-surface-container-highest: #333c46;
+  --md-on-surface: #e6e9ed;
+  --md-on-surface-variant: #8f9aa6;
+  --md-outline: #414b56;
+  --md-outline-variant: #2c343d;
 
   /* Legacy aliases kept so nothing needs renaming everywhere */
   --bg: var(--md-surface-dim);
@@ -46,52 +53,52 @@
   --border: var(--md-outline-variant);
   --text: var(--md-on-surface);
   --text-dim: var(--md-on-surface-variant);
-  --text-soft: #cacaca;
+  --text-soft: #cdd3d9;
   --accent: var(--md-primary);
 
-  /* dota2.com's panel treatment: a translucent black gradient over the
-     page background, hairline dark border, wide soft black shadow. */
-  --panel-bg: linear-gradient(80deg, rgba(37, 39, 40, 0.92) 0%, rgba(16, 20, 21, 0.92) 100%);
-  --panel-bg-subtle: linear-gradient(to right, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3));
-  --panel-border: 1px solid rgba(0, 0, 0, 0.6);
-  --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  /* Panels: flat fill, hairline border, no glow. A panel's title sits in a
+     solid header strip (--panel-header) across its full width. */
+  --panel-bg: var(--md-surface-container);
+  --panel-bg-subtle: var(--md-surface-container);
+  --panel-border: 1px solid var(--md-outline-variant);
+  --panel-header: var(--md-surface-container-high);
+  /* Opaque (not a translucent overlay) so sticky table cells can match it */
+  --row-stripe: color-mix(in srgb, #ffffff 2.5%, var(--md-surface-container));
+  /* Selected state (active nav item / tab / chip) */
+  --selected-bg: color-mix(in srgb, var(--pastel-lavender) 16%, var(--md-surface-container-high));
 
-  /* Dota-semantic colors - the in-game Radiant green / Dire red,
-     brightened slightly for text contrast on dark panels. */
-  --radiant: #92c83e;
-  --dire: #e5553d;
-  --ward-obs: #e8c547;
-  --ward-sen: #5ba8e8;
+  /* Dota-semantic colors, pastel */
+  --radiant: var(--pastel-mint);
+  --dire: var(--pastel-rose);
+  --ward-obs: var(--pastel-butter);
+  --ward-sen: var(--pastel-sky);
 
-  /* Shape scale - dota2.com is squared off: 0-5px everywhere. */
+  /* Shape scale - boxy */
   --shape-xs: 2px;
   --shape-sm: 3px;
   --shape-md: 4px;
-  --shape-lg: 5px;
+  --shape-lg: 4px;
   --shape-xl: 6px;
   --shape-full: 3px;
 
-  /* Elevation - neutral black shadows, like dota2.com's 0 0 30px panels */
-  --elevation-1: 0 0 20px rgba(0, 0, 0, 0.3);
-  --elevation-2: 0 0 30px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.5);
-  --elevation-3: 0 0 40px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(0, 0, 0, 0.6);
+  /* Elevation - kept minimal; panels read by fill contrast, not shadow */
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --elevation-2: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --elevation-3: 0 6px 18px rgba(0, 0, 0, 0.45);
 
-  /* Motion - calmer than before: dota2.com eases and fades, it doesn't bounce */
+  /* Motion */
   --motion-spring: cubic-bezier(0.25, 0.8, 0.25, 1);
   --motion-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-emphasized: cubic-bezier(0.3, 0, 0.4, 1);
-  --duration-short: 150ms;
-  --duration-medium: 250ms;
-  --duration-long: 450ms;
+  --duration-short: 120ms;
+  --duration-medium: 200ms;
+  --duration-long: 400ms;
 
-  /* Reaver / Radiance (dota2.com's faces) are Valve-proprietary; Cinzel
-     is the closest freely licensed flared-serif caps display face, and
-     Noto Sans is what dota2.com itself falls back to for body text. */
-  --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+  --font-display: "Noto Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-body: "Noto Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
-  /* Uppercase tracked label style (dota2.com's "ATTRIBUTE", "COMPLEXITY") */
-  --label-tracking: 0.12em;
+  /* Small uppercase labels (table headers, stat captions) */
+  --label-tracking: 0.06em;
 }
 
 /* ============================================================
@@ -127,15 +134,7 @@ html {
 
 body {
   margin: 0;
-  /* Approximates dota2.com's "greyfade" backdrop: near-black at the
-     edges with a cold slate haze toward the top right. Fixed so long
-     pages scroll over it the way dota2.com's content does. */
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(ellipse 70% 55% at 78% 0%, rgba(120, 136, 150, 0.22), transparent 70%),
-    radial-gradient(ellipse 60% 50% at 10% 15%, rgba(70, 80, 92, 0.18), transparent 70%),
-    linear-gradient(180deg, #1c2024 0%, #111316 45%, #0a0b0d 100%);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--text-soft);
   font-family: var(--font-body);
   font-size: 14px;
@@ -146,55 +145,61 @@ h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 700;
   color: var(--text);
+  letter-spacing: 0.01em;
+}
+/* Page titles: bold caps with a hard drop shadow, like an item name on a
+   DOTABUFF tooltip. */
+h1, h2 {
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
 }
 
 a {
-  color: var(--text);
+  color: var(--md-primary);
   text-decoration: none;
   transition: color var(--duration-short) var(--motion-standard);
 }
 a:hover {
-  color: var(--md-primary);
+  color: var(--md-on-primary-container);
 }
 
 :focus-visible {
-  outline: 1px solid var(--md-primary);
-  outline-offset: 2px;
+  outline: 2px solid var(--md-primary);
+  outline-offset: 1px;
   border-radius: var(--shape-xs);
 }
 
+/* Default button - flat box, lightens on hover. Specific buttons (tabs,
+   chips, primary) override below. */
 button {
   font-family: var(--font-body);
-}
-
-/* Default button - dota2.com's "PLAY FOR FREE" treatment: translucent
-   dark fill, light hairline border, uppercase tracked label, brightens
-   on hover. Specific buttons (tabs, chips, primary) override below. */
-button {
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--md-surface-container-high);
   color: var(--text);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 9px 18px;
+  border: 1px solid var(--md-outline);
+  padding: 8px 16px;
   border-radius: var(--shape-sm);
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
+  font-size: 13px;
+  font-weight: 600;
   transition:
     background var(--duration-short) var(--motion-standard),
     border-color var(--duration-short) var(--motion-standard),
     color var(--duration-short) var(--motion-standard);
 }
 :where(button:hover:not(:disabled)) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.8);
+  background: var(--md-surface-container-highest);
+  border-color: color-mix(in srgb, var(--md-primary) 45%, var(--md-outline));
 }
 :where(button:disabled) {
   opacity: 0.45;
   cursor: default;
+}
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 /* ============================================================
@@ -202,37 +207,49 @@ button {
    ============================================================ */
 .app-header {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px 28px;
-  padding: 14px 32px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.6));
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  gap: 0 24px;
+  padding: 0 24px;
+  background: var(--md-surface-container);
+  border-bottom: 1px solid var(--md-outline-variant);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 800;
-  letter-spacing: 0.1em;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--text);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
+}
+/* Small pastel block before the name - the site's only logo. */
+.brand::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, var(--pastel-lavender), var(--pastel-mint));
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
 }
 .brand:hover {
   color: var(--text);
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.25);
 }
 
+/* Boxy nav: each link is a full-height cell; the current page gets a
+   lavender-tinted fill with a lavender bar along its bottom edge. */
 .app-header nav {
   display: flex;
   flex-wrap: nowrap;
-  gap: 26px;
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: none;
@@ -241,40 +258,30 @@ button {
 .app-header nav::-webkit-scrollbar {
   display: none;
 }
-/* dota2.com nav: serif caps, wide tracking, soft grey that goes white on
-   hover, and a red-orange underline under the current page. */
 .app-header nav a {
-  position: relative;
-  color: rgba(255, 255, 255, 0.72);
-  font-family: var(--font-display);
-  font-size: 15px;
+  display: flex;
+  align-items: center;
+  color: var(--text-dim);
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 6px 0;
+  letter-spacing: 0.04em;
+  padding: 14px 16px 12px;
+  border-bottom: 2px solid transparent;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: color var(--duration-short) var(--motion-standard);
-}
-.app-header nav a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  background: var(--md-primary);
-  transform: scaleX(0);
-  transition: transform var(--duration-medium) var(--motion-standard);
+  transition:
+    color var(--duration-short) var(--motion-standard),
+    background var(--duration-short) var(--motion-standard);
 }
 .app-header nav a:hover {
   color: var(--text);
+  background: var(--md-surface-container-high);
 }
 .app-header nav a.nav-active {
   color: var(--text);
-}
-.app-header nav a.nav-active::after {
-  transform: scaleX(1);
+  background: var(--selected-bg);
+  border-bottom-color: var(--md-primary);
 }
 
 .app-main {
@@ -343,14 +350,14 @@ button {
   }
 }
 
+/* Notes-style box (like the blue-grey notes panel on a DOTABUFF tooltip) */
 .empty-state {
-  padding: 48px 24px;
+  padding: 32px 24px;
   text-align: center;
-  color: var(--text-dim);
-  background: var(--panel-bg);
-  border: var(--panel-border);
+  color: var(--text-soft);
+  background: color-mix(in srgb, var(--pastel-sky) 9%, var(--md-surface-container));
+  border: 1px solid color-mix(in srgb, var(--pastel-sky) 18%, var(--md-outline-variant));
   border-radius: var(--shape-lg);
-  box-shadow: var(--elevation-1);
 }
 
 .error-box {
@@ -389,19 +396,17 @@ button {
 .toolbar select {
   background: var(--md-surface-container-high);
   color: var(--text);
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  padding: 8px 14px;
+  border: 1px solid var(--md-outline);
+  padding: 7px 12px;
   border-radius: var(--shape-sm);
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   cursor: pointer;
   transition: border-color var(--duration-short) var(--motion-standard);
 }
 .toolbar select:hover {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--md-primary);
 }
 .match-filters {
   justify-content: flex-start;
@@ -414,13 +419,11 @@ button {
 .filter-chip {
   background: var(--md-surface-container-high);
   color: var(--text-dim);
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  padding: 7px 13px;
+  border: 1px solid var(--md-outline);
+  padding: 6px 12px;
   border-radius: var(--shape-sm);
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-weight: 600;
+  font-size: 12px;
   cursor: pointer;
   transition:
     background var(--duration-short) var(--motion-standard),
@@ -429,11 +432,11 @@ button {
 }
 .filter-chip:hover {
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: color-mix(in srgb, var(--md-primary) 45%, var(--md-outline));
 }
 .filter-chip-active {
-  background: color-mix(in srgb, var(--md-primary) 18%, var(--md-surface-container-high));
-  color: var(--text);
+  background: var(--selected-bg);
+  color: var(--md-on-primary-container);
   border-color: var(--md-primary);
 }
 
@@ -454,8 +457,8 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: color-mix(in srgb, var(--md-primary) 18%, var(--md-surface-container-high));
-  color: var(--text);
+  background: var(--selected-bg);
+  color: var(--md-on-primary-container);
   border: 1px solid var(--md-primary);
   padding: 3px 6px 3px 3px;
   border-radius: var(--shape-full);
@@ -507,25 +510,28 @@ table {
 }
 th,
 td {
-  padding: 10px 14px;
+  padding: 9px 14px;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--md-outline-variant);
   white-space: nowrap;
 }
 th {
   color: var(--text-dim);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 11px;
   letter-spacing: var(--label-tracking);
   text-transform: uppercase;
-  background: rgba(0, 0, 0, 0.45);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+  background: var(--panel-header);
+  border-bottom: 1px solid var(--md-surface-dim);
+}
+tbody tr:nth-child(even) {
+  background: var(--row-stripe);
 }
 tbody tr {
   transition: background var(--duration-short) var(--motion-standard);
 }
 tbody tr:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--md-surface-container-high);
 }
 tbody tr:last-child td {
   border-bottom: none;
@@ -573,10 +579,10 @@ tbody tr:last-child td {
   font-weight: 800;
 }
 .match-list tr.row-win:hover {
-  background: color-mix(in srgb, var(--radiant) 9%, transparent);
+  background: color-mix(in srgb, var(--radiant) 8%, var(--md-surface-container));
 }
 .match-list tr.row-loss:hover {
-  background: color-mix(in srgb, var(--dire) 9%, transparent);
+  background: color-mix(in srgb, var(--dire) 8%, var(--md-surface-container));
 }
 
 .hero-cell {
@@ -589,8 +595,7 @@ tbody tr:last-child td {
   height: 26px;
   border-radius: var(--shape-xs);
   vertical-align: middle;
-  /* dota2.com hero portraits: hard black drop shadow */
-  box-shadow: 1px 1px 4px #000;
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
 }
 .hero-icon-cell {
   /* Pinned via width = min-width = max-width so the rendered size is
@@ -642,13 +647,13 @@ tbody tr:last-child td {
   transition: background var(--duration-short) var(--motion-standard);
 }
 .match-row:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--md-surface-container-high);
 }
 .match-row.row-win:hover {
-  background: color-mix(in srgb, var(--radiant) 9%, transparent);
+  background: color-mix(in srgb, var(--radiant) 8%, var(--md-surface-container));
 }
 .match-row.row-loss:hover {
-  background: color-mix(in srgb, var(--dire) 9%, transparent);
+  background: color-mix(in srgb, var(--dire) 8%, var(--md-surface-container));
 }
 .match-row-link {
   position: absolute;
@@ -816,23 +821,20 @@ tbody tr:last-child td {
   margin-bottom: 22px;
 }
 .match-header h2 {
-  font-size: 34px;
-  letter-spacing: 0.1em;
+  font-size: 28px;
   margin: 0 0 4px;
 }
 .match-header h2.radiant-won {
   color: var(--radiant);
-  text-shadow: 0 0 24px color-mix(in srgb, var(--radiant) 35%, transparent), 0 2px 4px #000;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
 }
 .match-header h2.dire-won {
   color: var(--dire);
-  text-shadow: 0 0 24px color-mix(in srgb, var(--dire) 35%, transparent), 0 2px 4px #000;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
 }
 .match-meta {
   color: var(--text-dim);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 13px;
 }
 
 .scoreboard.team-radiant thead th:first-of-type {
@@ -850,13 +852,21 @@ tbody tr:last-child td {
   position: sticky;
   left: 0;
   z-index: 3;
-  background: #0f1112;
+  background: var(--panel-header);
 }
 .scoreboard tbody .hero-icon-cell,
 .scoreboard tbody .hero-name-cell {
   position: sticky;
   z-index: 2;
-  background: #1f2223;
+  background: var(--md-surface-container);
+}
+.scoreboard tbody tr:nth-child(even) .hero-icon-cell,
+.scoreboard tbody tr:nth-child(even) .hero-name-cell {
+  background: var(--row-stripe);
+}
+.scoreboard tbody tr:hover .hero-icon-cell,
+.scoreboard tbody tr:hover .hero-name-cell {
+  background: var(--md-surface-container-high);
 }
 .scoreboard tbody .hero-icon-cell {
   left: 0;
@@ -944,29 +954,34 @@ tbody tr:last-child td {
   background: var(--panel-bg);
   border: var(--panel-border);
   border-radius: var(--shape-lg);
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
   box-shadow: var(--elevation-1);
-  transition:
-    transform var(--duration-medium) var(--motion-spring),
-    box-shadow var(--duration-medium) var(--motion-standard);
+  overflow: hidden;
 }
-.chart:hover {
-  box-shadow: var(--elevation-2);
+/* A card's title (a direct h3, or the Hero Overview's title row) spans the
+   card's full width as a solid header strip. */
+.chart > h3,
+.chart > .hero-overview-header {
+  margin: -16px -16px 14px;
+  padding: 10px 16px;
+  background: var(--panel-header);
+  border-bottom: 1px solid var(--md-surface-dim);
 }
 .chart h3 {
-  margin: 0 0 12px;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--text);
   font-weight: 700;
-  letter-spacing: 0.1em;
+}
+.chart > .hero-overview-header h3 {
+  margin: 0;
 }
 .chart-svg {
   width: 100%;
   height: auto;
 }
 .chart-axis {
-  stroke: rgba(255, 255, 255, 0.12);
+  stroke: var(--md-outline);
   stroke-width: 1;
 }
 .chart-line {
@@ -1010,6 +1025,7 @@ tbody tr:last-child td {
    ============================================================ */
 .hero-overview-header {
   margin-bottom: 4px;
+  flex-wrap: nowrap;
 }
 .hero-overview-header h3 {
   margin: 0;
@@ -1020,7 +1036,7 @@ tbody tr:last-child td {
 }
 .hero-overview-row {
   padding: 14px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--md-outline-variant);
 }
 .hero-overview-row:last-child {
   border-bottom: none;
@@ -1050,7 +1066,7 @@ tbody tr:last-child td {
 .hero-overview-bar-track {
   height: 4px;
   border-radius: var(--shape-full);
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--md-surface-container-high);
   overflow: hidden;
   margin: 4px 0;
 }
@@ -1060,7 +1076,7 @@ tbody tr:last-child td {
   transition: width var(--duration-long) var(--motion-spring);
 }
 .hero-overview-bar-matches {
-  background: var(--md-primary);
+  background: var(--pastel-lavender);
 }
 .hero-overview-bar-winrate {
   background: var(--radiant);
@@ -1088,7 +1104,7 @@ tbody tr:last-child td {
   height: 6px;
   border-radius: var(--shape-full);
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--md-surface-container-high);
 }
 .hero-overview-lane-segment {
   height: 100%;
@@ -1126,7 +1142,7 @@ tbody tr:last-child td {
 }
 .raw-json {
   margin-top: 10px;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--md-surface-container-lowest);
   border: var(--panel-border);
   border-radius: var(--shape-md);
   padding: 14px;
@@ -1160,15 +1176,13 @@ tbody tr:last-child td {
 .avatar {
   width: 64px;
   height: 64px;
-  border-radius: var(--shape-xs);
-  box-shadow: 1px 1px 6px #000;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--shape-sm);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--md-outline);
 }
 .profile-header h2 {
   margin: 0 0 4px;
-  font-size: 30px;
-  letter-spacing: 0.1em;
-  text-shadow: 0 2px 6px #000;
+  font-size: 26px;
 }
 
 /* Win/loss/win-rate/match-count summary row underneath the profile header
@@ -1192,8 +1206,8 @@ tbody tr:last-child td {
 }
 .profile-stat-value {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 26px;
+  font-weight: 800;
+  font-size: 24px;
   color: var(--text);
 }
 .profile-stat-label {
@@ -1207,7 +1221,7 @@ tbody tr:last-child td {
 .profile-stat-bar-track {
   height: 4px;
   border-radius: var(--shape-full);
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--md-surface-container-high);
   overflow: hidden;
   margin: 6px auto 0;
   max-width: 80px;
@@ -1230,8 +1244,8 @@ tbody tr:last-child td {
   font-size: 40px;
   font-weight: 700;
   margin: 4px 0;
-  color: var(--text);
-  text-shadow: 0 2px 8px #000;
+  color: var(--md-primary);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
   animation: pop-in var(--duration-medium) var(--motion-spring) both;
 }
 
@@ -1253,18 +1267,15 @@ tbody tr:last-child td {
 }
 .settings label {
   display: block;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 6px;
-  color: var(--text-dim);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: var(--label-tracking);
+  color: var(--text);
 }
 .settings input {
   width: 100%;
-  background: var(--md-surface-container-high);
+  background: var(--md-surface-container-lowest);
   color: var(--text);
-  border: 1px solid rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--md-outline);
   padding: 11px 16px;
   border-radius: var(--shape-md);
   font-size: 14px;
@@ -1283,19 +1294,20 @@ tbody tr:last-child td {
   margin-top: 6px;
   line-height: 1.5;
 }
+/* Primary action: solid pastel lavender with dark text */
 .settings button {
-  background: linear-gradient(180deg, #d9432c 0%, #a52a18 100%);
+  background: var(--md-primary);
   color: var(--md-on-primary);
-  border: 1px solid #ff6046;
-  padding: 11px 24px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--md-primary);
+  padding: 9px 22px;
+  font-weight: 700;
 }
 .settings button:hover:not(:disabled) {
-  background: linear-gradient(180deg, #ef5a41 0%, #bb321d 100%);
-  border-color: #ff8a73;
+  background: var(--md-on-primary-container);
+  border-color: var(--md-on-primary-container);
 }
 .settings button.danger {
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--md-surface-container-high);
   color: var(--md-error);
   border-color: color-mix(in srgb, var(--md-error) 60%, transparent);
 }
@@ -1305,7 +1317,7 @@ tbody tr:last-child td {
 }
 .settings hr {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--md-outline-variant);
   margin: 28px 0;
 }
 .status-ok {
@@ -1381,7 +1393,8 @@ tbody tr:last-child td {
   gap: 14px;
 }
 .lane-h2h-pair {
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--md-surface-container-low);
+  border: 1px solid var(--md-outline-variant);
   border-radius: var(--shape-md);
   overflow: hidden;
 }
@@ -1393,7 +1406,7 @@ tbody tr:last-child td {
   padding: 8px 14px;
 }
 .lane-h2h-row:not(:last-child) {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--md-outline-variant);
 }
 .lane-h2h-row-header {
   padding: 10px 14px;
@@ -1453,7 +1466,7 @@ tbody tr:last-child td {
   height: 6px;
   border-radius: var(--shape-full);
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--md-surface-container-high);
 }
 .lane-compare-fill-radiant {
   background: var(--radiant);
@@ -1471,24 +1484,33 @@ tbody tr:last-child td {
   background: var(--panel-bg);
   border: var(--panel-border);
   border-radius: var(--shape-lg);
-  padding: 14px 18px;
-  margin-bottom: 12px;
-  transition: box-shadow var(--duration-medium) var(--motion-standard);
+  padding: 0 16px;
+  margin-bottom: 10px;
+  overflow: hidden;
 }
-.section:hover {
-  box-shadow: var(--elevation-1);
+.section[open] {
+  padding-bottom: 14px;
 }
 .section summary {
   cursor: pointer;
   font-weight: 700;
   color: var(--text);
   font-family: var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   list-style: none;
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0 -16px;
+  padding: 10px 16px;
+  background: var(--panel-header);
+  transition: background var(--duration-short) var(--motion-standard);
+}
+.section summary:hover {
+  background: var(--md-surface-container-highest);
+}
+.section[open] > summary {
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--md-surface-dim);
 }
 .section summary::-webkit-details-marker {
   display: none;
@@ -1519,9 +1541,9 @@ tbody tr:last-child td {
 
 .chat-filter {
   width: 100%;
-  background: var(--md-surface-container-high);
+  background: var(--md-surface-container-lowest);
   color: var(--text);
-  border: 1px solid rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--md-outline);
   padding: 10px 16px;
   border-radius: var(--shape-md);
   margin: 12px 0;
@@ -1541,7 +1563,7 @@ tbody tr:last-child td {
   align-items: center;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--md-outline-variant);
 }
 .skill-build-row:last-child {
   border-bottom: none;
@@ -1558,15 +1580,15 @@ tbody tr:last-child td {
   min-width: 28px;
   height: 28px;
   font-size: 10px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(0, 0, 0, 0.7);
+  background: var(--md-surface-container-high);
+  border: 1px solid var(--md-outline);
   border-radius: var(--shape-sm);
   padding: 0 5px;
   transition: transform var(--duration-short) var(--motion-spring);
 }
 .skill-pill:hover {
   transform: scale(1.08);
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: var(--md-primary);
 }
 .skill-pill img {
   width: 26px;
@@ -1626,13 +1648,13 @@ tbody tr:last-child td {
   position: relative;
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 0;
   background: var(--panel-bg-subtle);
   border: var(--panel-border);
   box-shadow: var(--elevation-1);
-  padding: 0 8px;
+  padding: 0;
   border-radius: var(--shape-lg);
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -1642,10 +1664,11 @@ tbody tr:last-child td {
 }
 .tab-indicator {
   position: absolute;
+  top: 0;
   bottom: 0;
-  height: 3px;
   left: 0;
-  background: var(--md-primary);
+  background: var(--selected-bg);
+  border-bottom: 2px solid var(--md-primary);
   border-radius: 0;
   transition:
     transform var(--duration-medium) var(--motion-spring),
@@ -1657,12 +1680,14 @@ tbody tr:last-child td {
   z-index: 1;
   background: transparent;
   border: none;
+  border-right: 1px solid var(--md-outline-variant);
   color: var(--text-dim);
-  padding: 13px 14px;
+  padding: 11px 16px;
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   cursor: pointer;
   border-radius: 0;
   white-space: nowrap;
@@ -1729,7 +1754,7 @@ tbody tr:last-child td {
   display: flex;
   gap: 10px;
   padding: 5px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--md-outline-variant);
   align-items: baseline;
 }
 .pretty-row dt {
@@ -1756,7 +1781,7 @@ tbody tr:last-child td {
 .pretty-row .pretty-list {
   margin-top: 4px;
   padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--md-surface-container-low);
   border-radius: var(--shape-sm);
 }
 .pretty-list {

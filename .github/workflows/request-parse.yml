@@ -3,7 +3,8 @@ name: Request OpenDota parses
 # Periodically asks OpenDota to parse a tracked account's newest match(es),
 # so "in-depth" match data (gold/XP graphs, purchase log, chat, etc.) shows
 # up on the dashboard without manually clicking "Request parse" after every
-# game.
+# game - and saves those matches (plus the indexes and profile.json the
+# site reads) to the data branch, since the site only ever reads from there.
 #
 # Deliberately uses the free/anonymous OpenDota tier, not the paid
 # OPENDOTA_API_KEY secret (see export-matches.yml for that) - this job
@@ -129,37 +130,111 @@ jobs:
             echo "No new matches - nothing to commit."
           fi
 
-      - name: Update match list index on the data branch
+      - name: Update match data on the data branch
         working-directory: data-branch
+        env:
+          ACCOUNT_ID: ${{ github.event.inputs.account_id || '90031862' }}
         run: |
           set -uo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          scripts="$GITHUB_WORKSPACE/.github/scripts"
 
+          # --- 1. Match list index -------------------------------------
           # Same list this run already fetched to check for new matches -
           # merge it into the existing index rather than re-fetching, so
-          # this stays a single API call per run same as before. Only ever
-          # adds/refreshes entries; nothing here ever needs to remove one.
+          # this costs no extra API call. Only ever adds/refreshes entries.
           #
           # existing is read via --slurpfile (not into a shell variable
-          # passed through --argjson) since matches-index.json is now
-          # thousands of matches - large enough that passing it as a
-          # command-line argument hits the OS's ARG_MAX and fails with
-          # "Argument list too long". --slurpfile reads the file directly,
-          # so it has no such limit. Written to a temp file first since jq
-          # would otherwise read a truncated matches-index.json out from
-          # under itself (the shell truncates > matches-index.json before
-          # jq runs, but --slurpfile still needs to read the original).
+          # passed through --argjson) since matches-index.json is thousands
+          # of matches - large enough that passing it as a command-line
+          # argument hits the OS's ARG_MAX ("Argument list too long").
+          # Written to a temp file first since the shell would otherwise
+          # truncate matches-index.json before jq reads it.
           if [ ! -f matches-index.json ]; then
             echo "[]" > matches-index.json
           fi
           jq -c -n --slurpfile existing matches-index.json --slurpfile fresh /tmp/request-parse-matches.json \
-            '($fresh[0] + $existing[0]) | unique_by(.match_id) | sort_by(.match_id) | reverse' > matches-index.json.tmp
+              '($fresh[0] + $existing[0]) | unique_by(.match_id) | sort_by(.match_id) | reverse' > matches-index.json.tmp
           mv matches-index.json.tmp matches-index.json
 
+          # --- 2. Full match JSON for new / not-yet-parsed matches -----
+          # The dashboard reads match details only from this branch (it
+          # never silently falls back to OpenDota), so new games need their
+          # full JSON saved here without waiting on a manual
+          # export-matches.yml run. A game that's still unparsed (no
+          # "version" yet - the parse this workflow just requested takes a
+          # few minutes) gets re-fetched on later runs, but only for 6 hours
+          # after it started - past that it's almost certainly never going
+          # to parse (e.g. the replay wasn't available), and re-fetching it
+          # every 20 minutes forever would just burn free-tier calls.
+          now=$(date +%s)
+          saved_ids=()
+          mapfile -t candidates < <(jq -r '.[] | "\(.match_id) \(.start_time)"' /tmp/request-parse-matches.json)
+          for line in "${candidates[@]}"; do
+            read -r id start_time <<< "$line"
+            file="matches/${id: -2}/$id.json"
+            if [ -f "$file" ]; then
+              if jq -e '.version != null' "$file" > /dev/null 2>&1; then
+                continue # already have the parsed version
+              fi
+              if [ $(( now - start_time )) -gt 21600 ]; then
+                continue # unparsed, but too old to keep retrying
+              fi
+            fi
+
+            status=$(curl -sS -G --connect-timeout 10 --max-time 30 -o /tmp/match.json -w "%{http_code}" \
+                "https://api.opendota.com/api/matches/$id" || echo "000")
+            sleep 1.2
+            if [ "$status" != "200" ] || ! jq -e '.match_id' /tmp/match.json > /dev/null 2>&1; then
+              echo "  match $id: HTTP $status, skipping for now"
+              continue
+            fi
+            mkdir -p "$(dirname "$file")"
+            jq -c '.' /tmp/match.json > "$file"
+            saved_ids+=("$id")
+            echo "  saved match $id (parsed: $(jq -r '.version != null' "$file"))"
+          done
+
+          # --- 3. Incremental extras/players index updates -------------
+          # Same jq filters export-matches.yml's full rebuild uses (from
+          # main's .github/scripts/), applied to just the files saved above
+          # and merged in over any older entry for the same match.
+          if [ "${#saved_ids[@]}" -gt 0 ]; then
+            for index in match-extras-index match-players-index; do
+              filter="$scripts/${index%-index}.jq" # e.g. match-extras.jq
+              : > /tmp/new-entries.jsonl
+              for id in "${saved_ids[@]}"; do
+                jq -c -f "$filter" "matches/${id: -2}/$id.json" >> /tmp/new-entries.jsonl
+              done
+              if [ ! -f "$index.json" ]; then
+                echo "[]" > "$index.json"
+              fi
+              jq -c -n --slurpfile existing "$index.json" --slurpfile fresh <(jq -s '.' /tmp/new-entries.jsonl) \
+                  '($fresh[0] + $existing[0]) | unique_by(.match_id) | sort_by(.match_id) | reverse' > "$index.json.tmp"
+              mv "$index.json.tmp" "$index.json"
+            done
+            git add matches match-extras-index.json match-players-index.json
+          fi
+
+          # --- 4. Profile ----------------------------------------------
+          # Name/avatar/rank for the site header. Rarely changes, so only
+          # refreshed when a new game was just saved (or if it's missing),
+          # not on every quiet 20-minute run.
+          if [ "${#saved_ids[@]}" -gt 0 ] || [ ! -f profile.json ]; then
+            if curl -sS -G --connect-timeout 10 --max-time 30 -o /tmp/profile.json \
+                "https://api.opendota.com/api/players/$ACCOUNT_ID" \
+                && jq -e '.profile.account_id' /tmp/profile.json > /dev/null 2>&1; then
+              jq -c '.' /tmp/profile.json > profile.json
+            else
+              echo "Profile fetch failed - keeping the existing profile.json."
+            fi
+          fi
+
           git add matches-index.json
+          [ -f profile.json ] && git add profile.json
           if ! git diff --cached --quiet; then
-            git commit -q -m "Update match list index [skip ci]"
+            git commit -q -m "Update match data [skip ci]"
             # Retries with a rebase on conflict - a long export-matches.yml
             # run pushes to this same branch periodically too, so the two
             # can genuinely collide (a plain rejected push would otherwise
@@ -172,5 +247,5 @@ jobs:
               git pull --rebase -q
             done
           else
-            echo "Index unchanged."
+            echo "Nothing changed."
           fi

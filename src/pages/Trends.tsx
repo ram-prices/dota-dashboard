@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getMatches, OpenDotaError } from "../opendota";
+import { errorMessage, getMatches } from "../opendota";
 import type { MatchSummary } from "../types";
 import { formatDuration, formatRelativeTime, heroIcon, heroName, isRadiant, matchModeLabel } from "../dota";
 
@@ -19,9 +19,9 @@ export function Trends({ accountId }: { accountId: number }) {
   const [resultFilter, setResultFilter] = useState<"all" | "win" | "loss">("all");
 
   useEffect(() => {
-    getMatches(accountId, { limit: 100 })
+    getMatches(100)
       .then(setMatches)
-      .catch((e) => setError(e instanceof OpenDotaError ? e.message : String(e)));
+      .catch((e) => setError(errorMessage(e)));
   }, [accountId]);
 
   const weekly = useMemo(() => {

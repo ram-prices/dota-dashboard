@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getHeroStats, OpenDotaError } from "../opendota";
+import { errorMessage, getHeroStats } from "../opendota";
 import type { HeroStat } from "../types";
 import { heroIcon, heroName } from "../dota";
 import { HeroOverview } from "../components/HeroOverview";
@@ -12,9 +12,9 @@ export function HeroStats({ accountId }: { accountId: number }) {
   const [sortKey, setSortKey] = useState<SortKey>("games");
 
   useEffect(() => {
-    getHeroStats(accountId)
+    getHeroStats()
       .then(setHeroes)
-      .catch((e) => setError(e instanceof OpenDotaError ? e.message : String(e)));
+      .catch((e) => setError(errorMessage(e)));
   }, [accountId]);
 
   if (error) return <div className="error-box">{error}</div>;

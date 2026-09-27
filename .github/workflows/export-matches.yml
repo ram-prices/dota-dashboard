@@ -39,6 +39,17 @@ jobs:
         with:
           ref: data
 
+      # Just the shared jq filters from main (.github/scripts/) - the index
+      # rebuild step below uses the same ones request-parse.yml does, so the
+      # two workflows can't drift apart on what an index entry looks like.
+      # (Nothing here ever `git add`s it - every commit below stages
+      # specific paths only - so it never ends up in a data commit.)
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: .main-scripts
+          sparse-checkout: .github/scripts
+
       - name: Export match JSON
         env:
           ACCOUNT_ID: ${{ github.event.inputs.account_id }}
@@ -122,7 +133,20 @@ jobs:
           # how much of the rest of the export completes.
           echo "$matches_json" | jq -c 'sort_by(.match_id) | reverse' > matches-index.json
           git add matches-index.json
-          commit_and_push "Update match list index [skip ci]"
+
+          # The account's profile (name/avatar/rank) - the site's header
+          # reads this instead of OpenDota's live /players/{id}. Best-effort:
+          # a failed fetch just keeps whatever profile.json already had.
+          if curl -sS -G --connect-timeout 10 --max-time 30 -o /tmp/profile.json \
+              "https://api.opendota.com/api/players/$ACCOUNT_ID" "${api_key_arg[@]}" \
+              && jq -e '.profile.account_id' /tmp/profile.json > /dev/null 2>&1; then
+            jq -c '.' /tmp/profile.json > profile.json
+            git add profile.json
+          else
+            echo "Profile fetch failed - keeping the existing profile.json."
+          fi
+
+          commit_and_push "Update match list index and profile [skip ci]"
 
           # Newest first, so a partial/interrupted run still covers your
           # most-likely-to-be-viewed matches before older ones.
@@ -193,33 +217,34 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Rebuild match-extras-index.json
+      - name: Rebuild match-extras-index.json and match-players-index.json
         run: |
           set -uo pipefail
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # A few extra per-match fields (each side's hero picks, the patch
-          # index) that only live on the full match detail, not the
-          # lightweight matches-index.json above - pulled into their own
-          # small index so the dashboard can filter by them without
-          # fetching every file under matches/. Always a full rebuild from
-          # whatever's already on disk (cheap - local reads, no API calls),
-          # so it stays complete even if this run didn't fetch anything new.
-          find matches -name '*.json' -print0 |
-            xargs -0 -n 500 jq -c '{
-              match_id,
-              radiant: ([.players[]? | select((.player_slot // 0) < 128) | .hero_id] | map(select(. != null))),
-              dire: ([.players[]? | select((.player_slot // 0) >= 128) | .hero_id] | map(select(. != null))),
-              patch
-            }' > /tmp/extras.jsonl
+          # Per-match fields that only live on the full match detail, not
+          # the lightweight matches-index.json above - pulled into their own
+          # small indexes so the dashboard can use them without fetching
+          # every file under matches/:
+          #   match-extras-index.json  - each side's hero picks + patch
+          #   match-players-index.json - every non-anonymous player (for the
+          #                              Teammates / player-vs pages)
+          # See the jq filters in .github/scripts/ on main for the exact
+          # shape. Always a full rebuild from whatever's already on disk
+          # (cheap - local reads, no API calls), so they stay complete even
+          # if this run didn't fetch anything new.
+          scripts=.main-scripts/.github/scripts
+          find matches -name '*.json' -print0 | xargs -0 -n 500 jq -c -f "$scripts/match-extras.jq" > /tmp/extras.jsonl
+          find matches -name '*.json' -print0 | xargs -0 -n 500 jq -c -f "$scripts/match-players.jq" > /tmp/players.jsonl
 
           jq -s -c 'sort_by(.match_id) | reverse' /tmp/extras.jsonl > match-extras-index.json
+          jq -s -c 'sort_by(.match_id) | reverse' /tmp/players.jsonl > match-players-index.json
 
-          git add match-extras-index.json
+          git add match-extras-index.json match-players-index.json
           if ! git diff --cached --quiet; then
-            git commit -q -m "Rebuild match-extras-index.json [skip ci]"
+            git commit -q -m "Rebuild match extras/players indexes [skip ci]"
             for attempt in 1 2 3; do
               if git push -q; then
                 break
@@ -228,5 +253,5 @@ jobs:
               git pull --rebase -q
             done
           else
-            echo "match-extras-index.json unchanged."
+            echo "Indexes unchanged."
           fi

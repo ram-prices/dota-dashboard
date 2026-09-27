@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { getMatch, getMatchExtrasIndex, getMatchIndexForStats, getMatches, getProfile, getWinLoss, OpenDotaError, syncRecentMatches } from "../opendota";
+import { errorMessage, getMatch, getMatchExtrasIndex, getMatchIndexForStats, getProfile, getWinLoss, syncRecentMatches } from "../opendota";
 import type { MatchExtras, MatchSummary, PlayerProfile, WinLoss } from "../types";
 import { HeroMultiSelect } from "../components/HeroMultiSelect";
 import { MultiSelect } from "../components/MultiSelect";
@@ -128,15 +128,14 @@ export function Dashboard({ accountId }: { accountId: number }) {
   const initialEnemyHero = parseHeroIds(searchParams.get("enemyHero"));
   const initialPatch = Math.floor(Number(searchParams.get("patch"))) || 0;
 
-  const [profile, setProfile] = useState<PlayerProfile | null>(null);
+  // undefined while loading; null when profile.json isn't in the data
+  // branch (or is for another account) - the header then just shows the
+  // account id rather than blocking the whole page on it.
+  const [profile, setProfile] = useState<PlayerProfile | null | undefined>(undefined);
   const [wl, setWl] = useState<WinLoss | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // The full match history - undefined while loading, null when the
-  // stored index isn't available (falls back to a short, unfiltered
-  // live-API list below instead, since filtering/paginating the live API
-  // properly would mean a lot more plumbing for a rare fallback path).
-  const [allMatches, setAllMatches] = useState<MatchSummary[] | null | undefined>(undefined);
-  const [fallbackMatches, setFallbackMatches] = useState<MatchSummary[] | null>(null);
+  // The full match history from the data branch - undefined while loading.
+  const [allMatches, setAllMatches] = useState<MatchSummary[] | undefined>(undefined);
   // Team compositions + patch per match - a separate, optional index (see
   // match-extras-index.json's README on the data branch). Filters that
   // need it (teammate/enemy hero, patch) just don't match anything for a
@@ -245,16 +244,16 @@ export function Dashboard({ accountId }: { accountId: number }) {
   // button just doesn't reset everything to null first, so the page stays
   // on the current data instead of flashing back to the loading screen.
   function loadData() {
-    Promise.all([getProfile(accountId), getWinLoss(accountId)])
-      .then(([p, w]) => {
-        setProfile(p);
-        setWl(w);
-      })
-      .catch((e) => setError(e instanceof OpenDotaError ? e.message : String(e)));
+    getProfile(accountId)
+      .then(setProfile)
+      .catch(() => setProfile(null));
 
-    getMatchIndexForStats()
-      .then(setAllMatches)
-      .catch(() => setAllMatches(null));
+    Promise.all([getWinLoss(), getMatchIndexForStats()])
+      .then(([w, matches]) => {
+        setWl(w);
+        setAllMatches(matches);
+      })
+      .catch((e) => setError(errorMessage(e)));
 
     getMatchExtrasIndex()
       .then(setExtrasIndex)
@@ -262,11 +261,10 @@ export function Dashboard({ accountId }: { accountId: number }) {
   }
 
   useEffect(() => {
-    setProfile(null);
+    setProfile(undefined);
     setWl(null);
     setError(null);
     setAllMatches(undefined);
-    setFallbackMatches(null);
     setExtrasIndex(null);
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -284,21 +282,11 @@ export function Dashboard({ accountId }: { accountId: number }) {
       loadData();
       setSyncMessage(newCount > 0 ? `Found ${newCount} new match${newCount === 1 ? "" : "es"}.` : "No new matches.");
     } catch (e) {
-      setSyncMessage(e instanceof OpenDotaError ? e.message : "Sync failed - try again in a bit.");
+      setSyncMessage(errorMessage(e));
     } finally {
       setSyncing(false);
     }
   }
-
-  // Only reached when the stored index isn't available - no filters or
-  // real pagination in that case, just a short recent-matches list
-  // straight from OpenDota's live API.
-  useEffect(() => {
-    if (allMatches !== null) return;
-    getMatches(accountId, { limit: PAGE_SIZE })
-      .then(setFallbackMatches)
-      .catch((e) => setError(e instanceof OpenDotaError ? e.message : String(e)));
-  }, [allMatches, accountId]);
 
   const heroOptions = useMemo(() => {
     if (!allMatches) return [];
@@ -438,14 +426,14 @@ export function Dashboard({ accountId }: { accountId: number }) {
 
   const pageMatches = useMemo(() => {
     if (filtered) return filtered.slice((clampedPage - 1) * PAGE_SIZE, clampedPage * PAGE_SIZE);
-    return fallbackMatches;
-  }, [filtered, clampedPage, fallbackMatches]);
+    return null;
+  }, [filtered, clampedPage]);
 
   // Average skill/rank, and this account's own played role, aren't in the
   // lightweight match-list response - only the full match detail has every
-  // player's rank_tier/position_est. Fetch each one (free/instant for
-  // anything already in the data branch, a live API call otherwise) and
-  // fill both columns in as they resolve rather than blocking the table.
+  // player's rank_tier/position_est. Fetch each one from the data branch
+  // (a match that isn't stored yet just leaves these blank) and fill the
+  // columns in as they resolve rather than blocking the table.
   useEffect(() => {
     if (!pageMatches) return;
     setRanks({});
@@ -479,13 +467,11 @@ export function Dashboard({ accountId }: { accountId: number }) {
   }, [pageMatches]);
 
   if (error) return <div className="error-box">{error}</div>;
-  if (!profile || !wl || allMatches === undefined || !pageMatches) return <div className="loading">Loading from OpenDota...</div>;
+  if (profile === undefined || !wl || allMatches === undefined || !pageMatches) return <div className="loading">Loading matches...</div>;
 
-  // When the index is available, the stat row reflects whatever filters
-  // are currently applied (falling back to the unfiltered all-time wl
-  // record - from OpenDota's own aggregated /wl endpoint - only when
-  // there's no filtered set to derive it from, i.e. the live-API
-  // fallback path, where filters are hidden anyway).
+  // The stat row reflects whatever filters are currently applied (the
+  // unfiltered all-time wl record is only a fallback for when there's no
+  // filtered set to derive it from).
   const isFiltered = Boolean(
     heroFilter.length > 0 ||
       resultFilter !== "all" ||
@@ -515,9 +501,9 @@ export function Dashboard({ accountId }: { accountId: number }) {
     <div>
       <div className="profile-header">
         <div className="profile-header-info">
-          {profile.profile?.avatarfull && <img src={profile.profile.avatarfull} alt="" className="avatar" />}
+          {profile?.profile?.avatarfull && <img src={profile.profile.avatarfull} alt="" className="avatar" />}
           <div>
-            <h2>{profile.profile?.personaname ?? `Account ${accountId}`}</h2>
+            <h2>{profile?.profile?.personaname ?? `Account ${accountId}`}</h2>
           </div>
         </div>
         <div className="profile-header-sync">
@@ -654,7 +640,6 @@ export function Dashboard({ accountId }: { accountId: number }) {
         </div>
       )}
 
-      {!allMatches && <p className="text-dim small">Full match history isn't exported yet - showing recent matches only, no filters.</p>}
 
       {pageMatches.length === 0 ? (
         <div className="empty-state">No matches match these filters.</div>

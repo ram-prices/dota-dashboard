@@ -5,35 +5,31 @@ matches — plus a few views neither of those sites gives you out of the box
 (custom trend charts, a searchable chat log, filtered match views).
 
 **No server, no database, no Docker.** It's a single static web page that
-calls the free [OpenDota API](https://docs.opendota.com/) straight from
-your browser. OpenDota already parses replays for millions of matches
-(yours are very likely already parsed, or can be parsed on demand) and
-exposes everything over REST — so there's no replay downloading or parsing
-to build or run yourself.
+reads your match data from this repo's own `data` branch. That branch is
+filled by GitHub Actions workflows that copy what the free
+[OpenDota API](https://docs.opendota.com/) has parsed for your matches, so
+there's no replay downloading or parsing to build or run yourself.
 
 ## How it works
 
 ```
-                    ┌─▶ data branch (our own exported copy) ─┐
- your browser ──────┤                                        ├──▶ cached in localStorage
-                    └─▶ api.opendota.com (fallback) ─────────┘
+ api.opendota.com ──▶ GitHub Actions workflows ──▶ data branch ──▶ your browser
+                                                                    (cached in localStorage)
 ```
 
-- You enter your Steam account once (Settings page); it's saved in your
-  browser's `localStorage`. (The deployed site already defaults to
-  `90031862` - see **Deploying** - so this step isn't needed there.)
-- For match details, every page checks this repo's own `data` branch
-  first — a permanent, git-hosted copy of whatever OpenDota returned for
-  each match at export time (see **Owning your match data** below) — and
-  only falls back to `https://api.opendota.com/api/...` live for a match
-  that hasn't been exported yet. Everything else (profile, match lists,
-  hero/teammate stats) always calls OpenDota directly, since those change
-  as you keep playing.
-- Match details never change once parsed, so on top of the data-branch
-  copy, whichever source answered also gets cached in `localStorage`
-  forever — you'll never re-fetch the same match twice from the same
-  browser. Lists (recent matches, hero stats, teammates) refresh every 5
-  minutes.
+- **The site only reads from the `data` branch.** Match list, match
+  details, profile, hero stats and teammate stats all come from files the
+  workflows keep there (see **Owning your match data** below). Hero and
+  teammate stats are computed in the browser from those files.
+- **OpenDota is only contacted when you ask:** the **Sync games** button
+  (pulls your newest matches into this browser right away), **Fetch from
+  OpenDota** / **Request parse** on a match that isn't stored yet, and
+  checking a new account in Settings. Nothing silently falls back to it,
+  so the site keeps working when OpenDota is down or rate-limiting.
+- New games show up on their own within about 20 minutes, once
+  `request-parse.yml` has saved them (see below).
+- Parsed matches never change, so they're cached in `localStorage`
+  forever; everything else (indexes, profile) refreshes every 5 minutes.
 
 Because there's no backend, "running" this just means opening the page —
 locally with `npm run dev`, or as an actual deployed website (see
@@ -74,7 +70,8 @@ remembers you in this browser.
   hero/result filter over that same match set.
 - **Heroes** — your per-hero games/win-rate, plus win rate with/against
   each hero.
-- **Teammates** — win rate alongside people you've played with.
+- **Teammates** — win rate with and against people you've played with at
+  least twice (players with private profiles can't be included).
 - **Chat search** — full-text search across the chat logs of every match
   you've opened in this browser (search widens as you browse more
   matches).
@@ -82,7 +79,14 @@ remembers you in this browser.
   nothing OpenDota returns is ever hidden even if the dashboard doesn't
   have a dedicated view for it yet.
 
-## If a match shows "hasn't been parsed yet"
+## If a match isn't stored yet, or hasn't been parsed
+
+A match that isn't in the `data` branch yet (usually one you finished in
+the last 20 minutes) shows a **Fetch from OpenDota** button — that pulls it
+live into this browser only. `request-parse.yml` saves it to the repo for
+every device shortly after.
+
+### "Hasn't been parsed yet"
 
 OpenDota parses replays either automatically (for tracked/high-MMR
 players) or on request. If a recent match of yours shows up with only
@@ -102,7 +106,10 @@ end.
 `.github/workflows/request-parse.yml` runs on a schedule (every 20 minutes)
 and asks OpenDota to parse a tracked account's newest match(es) — so new
 games show up with full in-depth data without you ever clicking "Request
-parse" by hand. It's hardcoded to account_id `90031862` by default; edit
+parse" by hand. It also saves each new game's full JSON to the `data`
+branch (re-fetching it while it's still unparsed, for up to 6 hours after
+the game), updates the indexes the site reads, and refreshes
+`profile.json` whenever it saves a new game. It's hardcoded to account_id `90031862` by default; edit
 the `default:` values in that file to point at a different account.
 
 It's cost-aware: it tracks the highest match_id it's already handled in
@@ -130,10 +137,10 @@ Two things worth knowing:
 
 `.github/workflows/export-matches.yml` copies whatever OpenDota currently
 has for each of an account's matches into this repo's `data` branch — one
-minified JSON file per match (see that branch's own README for the exact
-layout). The dashboard reads from there first, falling back to OpenDota's
-live API only for a match that hasn't been exported yet (see **How it
-works** above).
+minified JSON file per match, plus the indexes and `profile.json` the site
+reads (see that branch's own README for the exact layout). Run it by hand
+once for your full history; after that `request-parse.yml` keeps new games
+coming in on its own.
 
 Why this exists: it's a permanent copy independent of OpenDota's future
 availability, rate limits, or API changes — and unlike the `localStorage`
@@ -151,10 +158,10 @@ exported.
 
 ## Rate limits
 
-The free (anonymous) OpenDota tier is what the live dashboard uses by
-default — the caching described above makes that go a long way for normal
-personal browsing. If you hit limits there, paste a key into Settings (or
-set `VITE_OPENDOTA_API_KEY`, see **Deploying**) — OpenDota's keys are a
+The site itself only calls OpenDota when you click Sync games, Fetch from
+OpenDota or Request parse, so the free (anonymous) tier is plenty. If you
+ever hit limits there, paste a key into Settings (or set
+`VITE_OPENDOTA_API_KEY`, see **Deploying**) — OpenDota's keys are a
 paid, metered tier (roughly $0.01 per 100 calls at the time of writing;
 check <https://www.opendota.com/api-keys> for current pricing), not a free
 upgrade.
@@ -168,7 +175,8 @@ shared IP regardless of your own usage, and a metered key ties the limit
 to you instead.
 
 `request-parse.yml` deliberately does *not* use that key, even when it's
-set — it only ever makes 1-3 calls per 20-minute run, a light enough,
+set — a quiet run makes one call, and a run after a new game only a
+handful, a light enough,
 steady-paced load that the free tier handles fine (a few games a day is
 nowhere near any real limit), so it costs nothing. Both this and
 `VITE_OPENDOTA_API_KEY` (the live site's key, if you set one) stay separate
@@ -193,16 +201,16 @@ what other devices/visitors see by default. To point the deployed site at
 a different account permanently, change the `VITE_DEFAULT_ACCOUNT_ID` value
 in `.github/workflows/deploy.yml` and push.
 
-Note this doesn't add any real privacy: the deployed page is just calling
-the same public OpenDota API anyone can call directly — it's exactly as
-private (or public) as your data already is on opendota.com.
+Note this doesn't add any real privacy: the deployed page reads a public
+repo's `data` branch, holding the same public data anyone can get from
+opendota.com.
 
 ## Project layout
 
 ```
 src/
-  opendota.ts       OpenDota API client (one function per endpoint)
-  cache.ts          localStorage caching (forever for matches, 5min for lists)
+  opendota.ts       data layer: reads the data branch; explicit OpenDota calls
+  cache.ts          localStorage caching (forever for parsed matches, 5min for the rest)
   settings.ts       account_id / API key storage + SteamID64 parsing
   dota.ts           hero/item/ability id -> name/icon lookups, formatting helpers
   data/             hero/item/ability name+image data (from odota/dotaconstants)
@@ -212,5 +220,7 @@ src/
 
 To add your own view: add a `.tsx` file under `src/pages/`, wire it into
 `src/App.tsx`'s `<Routes>`, and call the existing functions in
-`src/opendota.ts` (add a new one there if you need an endpoint that isn't
-covered yet — see <https://docs.opendota.com/> for the full API).
+`src/opendota.ts`. New data should come from the `data` branch: if a view
+needs something the indexes don't have, add it to a workflow (see
+`.github/scripts/` for the index filters) rather than calling OpenDota
+from the page.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getPeers, OpenDotaError } from "../opendota";
+import { errorMessage, getPeers } from "../opendota";
 import type { PeerStat } from "../types";
 import { formatRelativeTime } from "../dota";
 
@@ -19,7 +19,7 @@ export function PlayerVs({ accountId }: { accountId: number }) {
     setPeer(undefined);
     getPeers(accountId)
       .then((peers) => setPeer(peers.find((p) => p.account_id === Number(targetAccountId)) ?? null))
-      .catch((e) => setError(e instanceof OpenDotaError ? e.message : String(e)));
+      .catch((e) => setError(errorMessage(e)));
   }, [accountId, targetAccountId]);
 
   if (Number(targetAccountId) === accountId) {
@@ -34,9 +34,8 @@ export function PlayerVs({ accountId }: { accountId: number }) {
       <div className="empty-state">
         <h2>No shared match history</h2>
         <p>
-          Account <code>{targetAccountId}</code> hasn't shown up in any of your recent matches OpenDota has on
-          record. This list is built from your own match history, so someone you've only played with/against a
-          long time ago (beyond what OpenDota keeps handy) may not show up.
+          Account <code>{targetAccountId}</code> doesn't show up in any match stored in your data repository (or
+          their profile is private, which hides their account id from match data).
         </p>
       </div>
     );
@@ -74,7 +73,7 @@ export function PlayerVs({ accountId }: { accountId: number }) {
               </p>
             </>
           ) : (
-            <p className="text-dim">Never on opposing teams (that OpenDota has on record).</p>
+            <p className="text-dim">Never on opposing teams in your stored matches.</p>
           )}
         </div>
       </div>

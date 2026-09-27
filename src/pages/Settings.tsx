@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAccountId, getApiKey, parseAccountId, setAccountId, setApiKey } from "../settings";
 import { clearAllCache } from "../cache";
-import { getProfile } from "../opendota";
+import { lookupProfileLive } from "../opendota";
 
 export function Settings() {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ export function Settings() {
     setChecking(true);
     setStatus("Checking OpenDota has this account...");
     try {
-      const profile = await getProfile(accountId);
+      const profile = await lookupProfileLive(accountId);
       setApiKey(apiKeyInput.trim());
       setAccountId(accountId);
       setStatus(`Found ${profile.profile?.personaname ?? "player"} — redirecting...`);

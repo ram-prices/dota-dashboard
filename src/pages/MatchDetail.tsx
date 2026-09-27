@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getMatch, getParseStatus, OpenDotaError, requestParse } from "../opendota";
-import { invalidate } from "../cache";
+import { errorMessage, fetchMatchLive, getMatch, getParseStatus, isParsedMatch, NotInRepoError, requestParse } from "../opendota";
 import type { MatchDetail as MatchDetailType, MatchPlayer } from "../types";
 import {
   abilityById,
@@ -113,6 +112,10 @@ export function MatchDetail() {
   const { matchId } = useParams();
   const [data, setData] = useState<MatchDetailType | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The match isn't in the data branch yet - nothing is fetched from
+  // OpenDota unless asked to via the buttons shown for this state.
+  const [missing, setMissing] = useState(false);
+  const [fetchingLive, setFetchingLive] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [requestMsg, setRequestMsg] = useState<string | null>(null);
   const [showRaw, setShowRaw] = useState(false);
@@ -122,12 +125,17 @@ export function MatchDetail() {
     if (!matchId) return;
     setData(null);
     setError(null);
+    setMissing(false);
+    setRequestMsg(null);
     getMatch(Number(matchId))
       .then(setData)
-      .catch((e) => setError(e instanceof OpenDotaError ? e.message : String(e)));
+      .catch((e) => {
+        if (e instanceof NotInRepoError) setMissing(true);
+        else setError(errorMessage(e));
+      });
   }, [matchId]);
 
-  const isParsed = Boolean(data && (data.version || data.players?.[0]?.purchase_log));
+  const isParsed = Boolean(data && isParsedMatch(data));
 
   const purchases = useMemo(() => {
     if (!data) return [];
@@ -160,11 +168,19 @@ export function MatchDetail() {
     return chat.filter((c) => c.key?.toLowerCase().includes(needle));
   }, [data, chatFilter]);
 
-  if (error) return <div className="error-box">{error}</div>;
-  if (!data) return <div className="loading">Loading match {matchId}...</div>;
-
-  const radiant = data.players.filter((p) => p.isRadiant ?? isRadiant(p.player_slot));
-  const dire = data.players.filter((p) => !(p.isRadiant ?? isRadiant(p.player_slot)));
+  async function handleFetchLive() {
+    if (!matchId) return;
+    setFetchingLive(true);
+    setRequestMsg(null);
+    try {
+      setData(await fetchMatchLive(Number(matchId)));
+      setMissing(false);
+    } catch (e) {
+      setRequestMsg(errorMessage(e));
+    } finally {
+      setFetchingLive(false);
+    }
+  }
 
   async function handleRequestParse() {
     if (!matchId) return;
@@ -173,7 +189,7 @@ export function MatchDetail() {
     try {
       const jobId = await requestParse(Number(matchId));
       if (!jobId) {
-        setRequestMsg("OpenDota didn't return a job id — it may already be parsed or queued. Try refreshing in a minute.");
+        setRequestMsg("OpenDota didn't return a job id — it may already be parsed or queued. Try Fetch from OpenDota in a minute.");
         return;
       }
       for (let i = 0; i < 20; i++) {
@@ -181,16 +197,43 @@ export function MatchDetail() {
         const done = await getParseStatus(jobId);
         if (done) break;
       }
-      invalidate(`match:${matchId}`);
-      const fresh = await getMatch(Number(matchId));
+      const fresh = await fetchMatchLive(Number(matchId));
       setData(fresh);
-      setRequestMsg(fresh.players?.[0]?.purchase_log ? "Parsed!" : "Still processing — try refreshing in a bit.");
+      setMissing(false);
+      setRequestMsg(isParsedMatch(fresh) ? "Parsed!" : "Still processing — try Fetch from OpenDota in a bit.");
     } catch (e) {
-      setRequestMsg(e instanceof OpenDotaError ? e.message : String(e));
+      setRequestMsg(errorMessage(e));
     } finally {
       setRequesting(false);
     }
   }
+
+  if (error) return <div className="error-box">{error}</div>;
+  if (missing) {
+    return (
+      <div className="empty-state">
+        <h2>Match {matchId} isn't in your repository yet</h2>
+        <p>
+          New games are saved to the data branch automatically within about 20 minutes. You can also pull this one
+          from OpenDota now (it'll be cached in this browser), or ask OpenDota to parse its replay first.
+        </p>
+        <div className="button-row">
+          <button onClick={handleFetchLive} disabled={fetchingLive || requesting}>
+            {fetchingLive ? "Fetching..." : "Fetch from OpenDota"}
+          </button>
+          <button onClick={handleRequestParse} disabled={fetchingLive || requesting}>
+            {requesting ? "Requesting..." : "Request parse"}
+          </button>
+        </div>
+        {requestMsg && <p className="text-dim small">{requestMsg}</p>}
+      </div>
+    );
+  }
+  if (!data) return <div className="loading">Loading match {matchId}...</div>;
+
+  const radiant = data.players.filter((p) => p.isRadiant ?? isRadiant(p.player_slot));
+  const dire = data.players.filter((p) => !(p.isRadiant ?? isRadiant(p.player_slot)));
+
 
   function playerLabel(p: MatchPlayer) {
     return (

@@ -64,6 +64,12 @@ export function invalidatePrefix(prefix: string): void {
   }
 }
 
+// Reads a cache entry (with when it was written) without fetching - for
+// callers whose freshness rule depends on the cached value itself.
+export function peekCached<T>(key: string): { ts: number; data: T } | null {
+  return readEnvelope<T>(key);
+}
+
 // Overwrites a cache entry directly (with a fresh timestamp) rather than
 // through cached()'s fetch-on-miss path - for when the caller already has
 // the data (e.g. a locally merged match index) and just wants it to look
