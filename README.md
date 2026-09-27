@@ -16,10 +16,13 @@ with thousands of entries. Each file is the raw response from OpenDota's
 keep size down - it's a straight snapshot of whatever OpenDota had at
 export time, not a bespoke format.
 
-Populated and kept up to date by `.github/workflows/export-matches.yml` on
-the `main` branch. The dashboard reads files from here first (via
-`raw.githubusercontent.com`) and only calls OpenDota's live API for a match
-that isn't here yet.
+Populated by `.github/workflows/export-matches.yml` on the `main` branch
+(full history, run by hand), and kept current by `request-parse.yml` (saves
+each new game's JSON every 20 minutes, re-fetching it while it's still
+unparsed for up to 6 hours after the game). The dashboard reads everything
+from this branch (via `raw.githubusercontent.com`) and never silently falls
+back to OpenDota's live API - a match that isn't here yet shows as missing,
+with a button to fetch it live on request.
 
 ## `matches-index.json`
 
@@ -45,3 +48,22 @@ on `main` for the id-to-version-string mapping).
 Rebuilt from scratch each `export-matches.yml` run by scanning every file
 already under `matches/` (cheap - local file reads, no API calls), so it
 always reflects the full exported set, not just what that run fetched.
+
+## `match-players-index.json`
+
+Every non-anonymous player in each match, as compact
+`[account_id, is_radiant (1/0), hero_id, personaname]` tuples, newest match
+first. Backs the dashboard's Teammates and player-vs pages (computed from
+this instead of OpenDota's `/players/{id}/peers`). Kept out of
+`match-extras-index.json` because it's several times larger and only those
+two pages need it.
+
+Rebuilt from scratch by `export-matches.yml` and updated incrementally by
+`request-parse.yml`, both via the same jq filter
+(`.github/scripts/match-players.jq` on `main`).
+
+## `profile.json`
+
+The raw OpenDota `GET /players/{account_id}` response (name, avatar, rank)
+for the site header. Refreshed by `export-matches.yml` each run and by
+`request-parse.yml` whenever it saves a new game.
