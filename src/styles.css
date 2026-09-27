@@ -619,9 +619,15 @@ tbody tr:last-child td {
    content, which drifts out of alignment with its neighbors the moment
    one row's text is wider than another's.
    ============================================================ */
-.match-table td {
-  padding: 10px 6px;
+.match-table td,
+.match-table th {
+  padding: 10px 8px;
   white-space: nowrap;
+}
+.match-table th {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  font-size: 11px;
 }
 .match-row {
   /* Positioned so match-row-link (an invisible stretched <a>) can cover
@@ -646,8 +652,9 @@ tbody tr:last-child td {
   position: absolute;
   inset: 0;
 }
-.match-row-hero-cell {
-  padding-left: 12px;
+/* Breathing room at the table's left/right edges (header row included) */
+.match-table .match-row-hero-cell {
+  padding-left: 20px;
 }
 .match-row-mode-cell {
   /* Signals the browser's table layout to give this column any leftover
@@ -656,9 +663,26 @@ tbody tr:last-child td {
   width: 100%;
   text-align: right;
 }
-.match-row-duration-cell {
-  padding-right: 12px;
+.match-table .match-row-duration-cell {
+  padding-right: 20px;
   text-align: right;
+}
+.match-table .th-short {
+  display: none;
+}
+@media (max-width: 640px) {
+  .match-table .th-long {
+    display: none;
+  }
+  .match-table .th-short {
+    display: inline;
+  }
+  .match-table .match-row-hero-cell {
+    padding-left: 12px;
+  }
+  .match-table .match-row-duration-cell {
+    padding-right: 12px;
+  }
 }
 .match-row-hero {
   display: flex;
@@ -675,7 +699,7 @@ tbody tr:last-child td {
   }
 }
 .match-row-result-cell {
-  text-align: center;
+  text-align: left;
 }
 .match-row-result {
   display: flex;
@@ -732,8 +756,16 @@ tbody tr:last-child td {
 .lane-pill.lane-draw {
   color: var(--text-dim);
 }
-.match-row-kda-cell {
+/* Kills, deaths and assists are three narrow columns of their own */
+.match-table td.match-row-kda-cell {
   font-size: 13px;
+}
+.match-table .match-row-kda-cell {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  min-width: 34px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 .match-row-stacked {
   display: flex;

@@ -645,6 +645,28 @@ export function Dashboard({ accountId }: { accountId: number }) {
         <div className="empty-state">No matches match these filters.</div>
       ) : (
         <table className="match-table">
+          <thead>
+            <tr>
+              {/* Full labels, with shorter ones swapped in on narrow screens
+                  so the header row isn't what forces the table to scroll. */}
+              <th className="match-row-hero-cell">Hero</th>
+              <th className="match-row-result-cell" title="Match result, then how your lane went">
+                <span className="th-long">Result / Lane</span>
+                <span className="th-short">W/L</span>
+              </th>
+              <th className="match-row-kda-cell" title="Kills">K</th>
+              <th className="match-row-kda-cell" title="Deaths">D</th>
+              <th className="match-row-kda-cell" title="Assists">A</th>
+              <th className="match-row-mode-cell" title="Lobby type, game mode, and average rank">
+                <span className="th-long">Type / Mode / Rank</span>
+                <span className="th-short">Mode</span>
+              </th>
+              <th className="match-row-duration-cell">
+                <span className="th-long">Duration</span>
+                <span className="th-short">Time</span>
+              </th>
+            </tr>
+          </thead>
           <tbody>
             {pageMatches.map((m, i) => {
               const won = matchWon(m);
@@ -695,9 +717,9 @@ export function Dashboard({ accountId }: { accountId: number }) {
                       )}
                     </span>
                   </td>
-                  <td className="match-row-kda-cell">
-                    {m.kills} / {m.deaths} / {m.assists}
-                  </td>
+                  <td className="match-row-kda-cell">{m.kills}</td>
+                  <td className="match-row-kda-cell">{m.deaths}</td>
+                  <td className="match-row-kda-cell">{m.assists}</td>
                   <td className="match-row-mode-cell">
                     <div className="match-row-stacked">
                       <span>{matchLobbyLabel(m.lobby_type, m.game_mode, m.start_time)}</span>
