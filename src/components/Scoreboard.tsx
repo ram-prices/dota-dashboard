@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import type { MatchPlayer } from "../types";
+import type { LogEntry, MatchPlayer } from "../types";
 import { formatGameTime, heroIcon, heroName, itemImage, itemName, itemObtainedTime, rankTierColor, rankTierLabel, unitDisplayName } from "../dota";
 
 // Width of the sticky hero-icon + hero-name columns that stay pinned to
@@ -31,10 +31,23 @@ function WardStat({ obs, sen }: { obs: number; sen: number }) {
   );
 }
 
-function itemIdsFor(entity: { item_0: number; item_1: number; item_2: number; item_3: number; item_4: number; item_5: number; item_neutral?: number }): number[] {
-  return [entity.item_0, entity.item_1, entity.item_2, entity.item_3, entity.item_4, entity.item_5, entity.item_neutral].filter(
-    (id): id is number => Boolean(id),
-  );
+// Inventory in the order the items were acquired (earliest first) rather
+// than slot order. Items with no purchase-log time (unparsed match, or not
+// bought - e.g. picked up) keep their slot order after the timed ones, and
+// the neutral item always stays last since it's its own slot.
+function itemIdsFor(
+  entity: { item_0: number; item_1: number; item_2: number; item_3: number; item_4: number; item_5: number; item_neutral?: number },
+  purchaseLog: LogEntry[] | undefined,
+): number[] {
+  const main = [entity.item_0, entity.item_1, entity.item_2, entity.item_3, entity.item_4, entity.item_5]
+    .filter((id): id is number => Boolean(id))
+    .map((id, slot) => ({ id, slot, time: itemObtainedTime(id, purchaseLog) }))
+    .sort((a, b) => {
+      if (a.time == null || b.time == null) return a.time == null ? (b.time == null ? a.slot - b.slot : 1) : -1;
+      return a.time - b.time || a.slot - b.slot;
+    })
+    .map((x) => x.id);
+  return entity.item_neutral ? [...main, entity.item_neutral] : main;
 }
 
 // Normally just the hero's own items, but a player with a persistent
@@ -47,11 +60,11 @@ function itemIdsFor(entity: { item_0: number; item_1: number; item_2: number; it
 // the same lookup works for both lines.
 function ItemGroups({ player }: { player: MatchPlayer }) {
   const groups = [
-    { key: "self", label: undefined as string | undefined, ids: itemIdsFor(player) },
+    { key: "self", label: undefined as string | undefined, ids: itemIdsFor(player, player.purchase_log) },
     ...(player.additional_units ?? []).map((unit) => ({
       key: unit.unitname,
       label: unitDisplayName(unit.unitname),
-      ids: itemIdsFor(unit),
+      ids: itemIdsFor(unit, player.purchase_log),
     })),
   ];
 
