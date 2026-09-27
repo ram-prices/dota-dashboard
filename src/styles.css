@@ -1087,6 +1087,9 @@ tbody tr:last-child td {
 .scoreboard td:nth-child(n + 15) {
   min-width: 72px; /* NW, HD, HL, TD - up to 6 digits */
 }
+.scoreboard td:nth-child(n + 11):nth-child(-n + 14) {
+  min-width: 62px; /* LH, DN, GPM, XPM - up to 4 digits */
+}
 
 /* ============================================================
    Charts
