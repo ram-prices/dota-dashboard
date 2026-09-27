@@ -62,7 +62,7 @@ type ModeFilterKey = number | "event";
 const MODE_OPTIONS: { value: ModeFilterKey; label: string }[] = [
   { value: 7, label: "Ranked" },
   { value: 0, label: "Unranked" },
-  { value: 4, label: "Bot Match" },
+  { value: 4, label: "Bot" },
   { value: "event", label: "Event" },
 ];
 const DEFAULT_MODE: ModeFilterKey[] = [7, 0];

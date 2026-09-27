@@ -494,13 +494,13 @@ button {
 .filter-chip-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 .filter-chip {
   background: var(--md-surface-container-high);
   color: var(--text-dim);
   border: 1px solid transparent;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: var(--shape-sm);
   font-weight: 600;
   font-size: 12px;
