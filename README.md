@@ -67,3 +67,15 @@ Rebuilt from scratch by `export-matches.yml` and updated incrementally by
 The raw OpenDota `GET /players/{account_id}` response (name, avatar, rank)
 for the site header. Refreshed by `export-matches.yml` each run and by
 `request-parse.yml` whenever it saves a new game.
+
+## `hero-positions.json`
+
+How many times each hero (`hero`, keyed by hero_id) and each team farm
+rank (`gpmRank`, 1 = highest GPM on the team) ended up at positions 1-5,
+counted over every stored player OpenDota estimated a position for. The
+site uses it to estimate a position for matches that don't have one
+(unparsed replays), shown faded with a "?" so it's never mistaken for
+OpenDota's own value.
+
+Rebuilt from scratch by `export-matches.yml` via
+`.github/scripts/hero-positions.jq` on `main`.
