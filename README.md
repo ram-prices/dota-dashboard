@@ -42,8 +42,12 @@ A few extra per-match fields that only exist on the full match detail (not
 the lightweight summary above), pulled out into their own small index so
 the dashboard doesn't need to fetch all of `matches/` just to filter by
 them: `radiant`/`dire` (each side's 5 hero_ids, for the teammate/enemy hero
-filters) and `patch` (OpenDota's patch index - see `src/data/patches.json`
-on `main` for the id-to-version-string mapping).
+filters), `patch` (OpenDota's patch index - see `src/data/patches.json`
+on `main` for the id-to-version-string mapping), and
+`radiant_lineup`/`dire_lineup` (every player on that side in slot order as
+`[hero_id, gold_per_min, position_est or null]`, so the site can show - or
+estimate, via `hero-positions.json` - each match's positions without the
+full match files). Built by `.github/scripts/match-extras.jq` on `main`.
 
 Rebuilt from scratch each `export-matches.yml` run by scanning every file
 already under `matches/` (cheap - local file reads, no API calls), so it
