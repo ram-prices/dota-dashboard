@@ -678,7 +678,11 @@ tbody tr:last-child td {
     display: inline;
   }
   .match-table .match-row-hero-cell {
-    padding-left: 12px;
+    padding-left: 8px;
+  }
+  .match-table .hero-portrait {
+    width: 36px;
+    height: 20px;
   }
   .match-table .match-row-duration-cell {
     padding-right: 12px;
