@@ -698,14 +698,13 @@ tbody tr:last-child td {
     font-weight: 600;
   }
 }
-.match-row-result-cell {
-  text-align: left;
-}
-.match-row-result {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
+/* Position, result and lane outcome: narrow centered columns */
+.match-table .match-row-pos-cell,
+.match-table .match-row-result-cell,
+.match-table .match-row-lane-cell {
+  text-align: center;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 .result-badge {
   width: 24px;

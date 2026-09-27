@@ -650,10 +650,12 @@ export function Dashboard({ accountId }: { accountId: number }) {
               {/* Full labels, with shorter ones swapped in on narrow screens
                   so the header row isn't what forces the table to scroll. */}
               <th className="match-row-hero-cell">Hero</th>
-              <th className="match-row-result-cell" title="Match result, then how your lane went">
-                <span className="th-long">Result / Lane</span>
+              <th className="match-row-pos-cell" title="Position you played (1-5)">Pos</th>
+              <th className="match-row-result-cell">
+                <span className="th-long">Result</span>
                 <span className="th-short">W/L</span>
               </th>
+              <th className="match-row-lane-cell" title="How your lane went">Lane</th>
               <th className="match-row-kda-cell" title="Kills">K</th>
               <th className="match-row-kda-cell" title="Deaths">D</th>
               <th className="match-row-kda-cell" title="Assists">A</th>
@@ -692,30 +694,32 @@ export function Dashboard({ accountId }: { accountId: number }) {
                         <img src={heroIcon(m.hero_id)!} alt={heroName(m.hero_id)} className="hero-icon" />
                       )}
                       <span className="match-row-hero-name">{heroName(m.hero_id)}</span>
-                      {positionShort(roles[m.match_id]) && (
-                        <span className="role-badge" title={positionLabel(roles[m.match_id]) ?? undefined}>
-                          {positionShort(roles[m.match_id])}
-                        </span>
-                      )}
                     </span>
                   </td>
-                  <td className="match-row-result-cell">
-                    <span className="match-row-result">
-                      <span className="result-badge" title={abandoned ? "Abandoned" : undefined}>
-                        {abandoned ? "✕" : won ? "W" : "L"}
+                  <td className="match-row-pos-cell">
+                    {positionShort(roles[m.match_id]) && (
+                      <span className="role-badge" title={positionLabel(roles[m.match_id]) ?? undefined}>
+                        {positionShort(roles[m.match_id])}
                       </span>
-                      {lanes[m.match_id] && (
-                        <span
-                          className={`lane-pill lane-${lanes[m.match_id]}`}
-                          title={laneOutcomeLabel(lanes[m.match_id]) ?? undefined}
-                        >
-                          <span className="lane-pill-arrow" aria-hidden="true">
-                            ↖
-                          </span>
-                          {lanes[m.match_id] === "won" ? "W" : lanes[m.match_id] === "lost" ? "L" : "D"}
-                        </span>
-                      )}
+                    )}
+                  </td>
+                  <td className="match-row-result-cell">
+                    <span className="result-badge" title={abandoned ? "Abandoned" : undefined}>
+                      {abandoned ? "✕" : won ? "W" : "L"}
                     </span>
+                  </td>
+                  <td className="match-row-lane-cell">
+                    {lanes[m.match_id] && (
+                      <span
+                        className={`lane-pill lane-${lanes[m.match_id]}`}
+                        title={laneOutcomeLabel(lanes[m.match_id]) ?? undefined}
+                      >
+                        <span className="lane-pill-arrow" aria-hidden="true">
+                          ↖
+                        </span>
+                        {lanes[m.match_id] === "won" ? "W" : lanes[m.match_id] === "lost" ? "L" : "D"}
+                      </span>
+                    )}
                   </td>
                   <td className="match-row-kda-cell">{m.kills}</td>
                   <td className="match-row-kda-cell">{m.deaths}</td>
