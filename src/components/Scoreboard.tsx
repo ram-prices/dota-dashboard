@@ -1,21 +1,7 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import type { LogEntry, MatchPlayer } from "../types";
 import { formatGameTime, heroIcon, heroName, itemImage, itemName, itemObtainedTime, rankTierColor, rankTierLabel, unitDisplayName } from "../dota";
-
-// Width of the sticky hero-icon + hero-name columns that stay pinned to
-// the left edge while the stat columns scroll - kept in sync with
-// .hero-icon-cell's 42px and .hero-name-cell's 150px in styles.css.
-const STICKY_WIDTH = 192;
-
-// The last column of each scroll-snap group that has another group after
-// it (Lvl/K/D/A/NW, Items, Wards/Destroyed, LH/DN/GPM/XPM - HD/HL/TD is
-// last, so there's no next group's column to hide) - used to measure each
-// group's natural width and, when it's narrower than the visible table,
-// stretch it with extra padding so the next group's first column doesn't
-// peek into view.
-const GROUP_ENDS = ["nw", "items", "destroyed", "xpm"] as const;
-type GroupEnd = (typeof GROUP_ENDS)[number];
 
 // obs_placed/sen_placed (Wards) and observer_kills/sentry_kills
 // (Destroyed - a ward is a killable unit, so OpenDota counts destroying
@@ -90,90 +76,69 @@ function ItemGroups({ player }: { player: MatchPlayer }) {
   );
 }
 
+// Shared between the scoreboards that should scroll together - see the
+// effect in Scoreboard below.
+export interface ScrollGroup {
+  members: Set<HTMLElement>;
+  echoes: Set<HTMLElement>;
+}
+
 export function Scoreboard({
   players,
   teamLabel,
   className,
+  scrollGroup,
 }: {
   players: MatchPlayer[];
   teamLabel: string;
   className: string;
+  scrollGroup?: ScrollGroup;
 }) {
   const tableRef = useRef<HTMLTableElement>(null);
-  const [extraPadding, setExtraPadding] = useState<Record<GroupEnd, number>>({
-    nw: 0,
-    items: 0,
-    destroyed: 0,
-    xpm: 0,
-  });
 
-  useLayoutEffect(() => {
-    const table = tableRef.current;
-    if (!table) return;
-
-    const measure = () => {
-      // Reset first so a previous run's extra padding doesn't get baked
-      // into this run's "natural" width measurement.
-      setExtraPadding({ nw: 0, items: 0, destroyed: 0, xpm: 0 });
-      requestAnimationFrame(() => {
-        if (!tableRef.current) return;
-        const starts = Array.from(tableRef.current.querySelectorAll<HTMLElement>(".scoreboard-group-start"));
-        const ends = tableRef.current.querySelectorAll<HTMLElement>(".scoreboard-group-end");
-        if (starts.length === 0 || ends.length === 0) return;
-
-        const available = tableRef.current.clientWidth - STICKY_WIDTH;
-        const groupStartOffsets = starts.map((el) => el.offsetLeft);
-
-        const next: Record<GroupEnd, number> = { nw: 0, items: 0, destroyed: 0, xpm: 0 };
-        ends.forEach((_endEl, i) => {
-          const groupStart = groupStartOffsets[i];
-          const groupEnd = groupStartOffsets[i + 1];
-          if (groupStart == null || groupEnd == null) return;
-          const naturalWidth = groupEnd - groupStart;
-          // A couple of extra pixels of margin absorbs sub-pixel rounding
-          // differences between offsetLeft (integer) and the fractional
-          // positions the browser actually renders at - without it, a
-          // sliver of the next group's first column can still peek in.
-          const extra = available - naturalWidth + 2;
-          const key = GROUP_ENDS[i];
-          if (key && extra > 0) next[key] = extra;
-        });
-        setExtraPadding(next);
-      });
+  // Keeps both teams' scoreboards horizontally scrolled to the same spot:
+  // scrolling either one scrolls the other by the same amount, live.
+  // Programmatic scrolls are marked in `echoes` so the other table's
+  // resulting scroll event isn't mirrored straight back (which would
+  // fight the user's own scroll whenever one table can't scroll as far).
+  useEffect(() => {
+    const el = tableRef.current;
+    if (!el || !scrollGroup) return;
+    scrollGroup.members.add(el);
+    const onScroll = () => {
+      if (scrollGroup.echoes.delete(el)) return;
+      for (const other of scrollGroup.members) {
+        if (other === el || other.scrollLeft === el.scrollLeft) continue;
+        scrollGroup.echoes.add(other);
+        other.scrollLeft = el.scrollLeft;
+      }
     };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(table);
-    return () => observer.disconnect();
-  }, [players]);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      scrollGroup.members.delete(el);
+      scrollGroup.echoes.delete(el);
+    };
+  }, [scrollGroup]);
 
   return (
     <table className={`scoreboard ${className}`} ref={tableRef}>
       <thead>
         <tr>
           <th colSpan={2}>{teamLabel}</th>
-          <th className="scoreboard-group-start">Lvl</th>
+          <th>Lvl</th>
           <th className="scoreboard-kda-cell">K</th>
           <th className="scoreboard-kda-cell">D</th>
           <th className="scoreboard-kda-cell">A</th>
-          <th className="scoreboard-group-end" style={{ paddingRight: 14 + extraPadding.nw }}>
-            NW
-          </th>
-          <th className="scoreboard-group-start scoreboard-group-end" style={{ paddingRight: 14 + extraPadding.items }}>
-            Items
-          </th>
-          <th className="scoreboard-group-start">Wards</th>
-          <th className="scoreboard-group-end" style={{ paddingRight: 14 + extraPadding.destroyed }}>
-            Destroyed
-          </th>
-          <th className="scoreboard-group-start">LH</th>
+          <th>NW</th>
+          <th className="scoreboard-items-cell">Items</th>
+          <th>Wards</th>
+          <th>Destroyed</th>
+          <th>LH</th>
           <th>DN</th>
           <th>GPM</th>
-          <th className="scoreboard-group-end" style={{ paddingRight: 14 + extraPadding.xpm }}>
-            XPM
-          </th>
-          <th className="scoreboard-group-start">HD</th>
+          <th>XPM</th>
+          <th>HD</th>
           <th>HL</th>
           <th>TD</th>
         </tr>
@@ -206,29 +171,25 @@ export function Scoreboard({
                   </div>
                 )}
               </td>
-              <td className="scoreboard-group-start">{p.level}</td>
+              <td>{p.level}</td>
               <td className="scoreboard-kda-cell">{p.kills}</td>
               <td className="scoreboard-kda-cell">{p.deaths}</td>
               <td className="scoreboard-kda-cell">{p.assists}</td>
-              <td className="scoreboard-group-end" style={{ paddingRight: 14 + extraPadding.nw }}>
-                {p.net_worth ?? "-"}
-              </td>
-              <td className="scoreboard-group-start scoreboard-group-end" style={{ paddingRight: 14 + extraPadding.items }}>
+              <td>{p.net_worth ?? "-"}</td>
+              <td className="scoreboard-items-cell">
                 <ItemGroups player={p} />
               </td>
-              <td className="scoreboard-group-start">
+              <td>
                 <WardStat obs={p.obs_placed ?? 0} sen={p.sen_placed ?? 0} />
               </td>
-              <td className="scoreboard-group-end" style={{ paddingRight: 14 + extraPadding.destroyed }}>
+              <td>
                 <WardStat obs={p.observer_kills ?? 0} sen={p.sentry_kills ?? 0} />
               </td>
-              <td className="scoreboard-group-start">{p.last_hits}</td>
+              <td>{p.last_hits}</td>
               <td>{p.denies}</td>
               <td>{p.gold_per_min}</td>
-              <td className="scoreboard-group-end" style={{ paddingRight: 14 + extraPadding.xpm }}>
-                {p.xp_per_min}
-              </td>
-              <td className="scoreboard-group-start">{p.hero_damage ?? "-"}</td>
+              <td>{p.xp_per_min}</td>
+              <td>{p.hero_damage ?? "-"}</td>
               <td>{p.hero_healing ?? "-"}</td>
               <td>{p.tower_damage ?? "-"}</td>
             </tr>

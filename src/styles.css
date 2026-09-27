@@ -1068,21 +1068,12 @@ tbody tr:last-child td {
   padding-right: 4px;
 }
 
-/* Instead of free-scrolling through 12 stat columns, scrolling/swiping
-   snaps to the start of each logical group (Lvl/KDA/Net Worth, Items,
-   LH/DN/GPM/XPM, APM/Pings) - scroll-padding-left keeps a snapped group
-   from landing partly behind the sticky hero columns. */
-.scoreboard {
-  scroll-snap-type: x mandatory;
-  scroll-padding-left: 192px;
-}
-.scoreboard-group-start {
-  scroll-snap-align: start;
-  /* Without this, a strong/fast swipe can fling straight past several
-     snap points and land many groups away instead of just the next one -
-     scroll-snap-stop forces the scroll to stop at every snap point in
-     turn regardless of swipe speed. */
-  scroll-snap-stop: always;
+/* Room for a full inventory (6 items + neutral) in every row, so the
+   Items column - and so both teams' tables - come out the same width
+   regardless of who's holding how much. That keeps the two scoreboards'
+   columns lined up while they scroll together (see Scoreboard.tsx). */
+.scoreboard-items-cell {
+  min-width: 236px;
 }
 
 /* ============================================================

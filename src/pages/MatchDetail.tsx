@@ -19,7 +19,7 @@ import {
   rankTierLabel,
   skillBracketLabel,
 } from "../dota";
-import { Scoreboard } from "../components/Scoreboard";
+import { Scoreboard, type ScrollGroup } from "../components/Scoreboard";
 import { LaneMatchups } from "../components/LaneMatchups";
 import { AdvantageChart } from "../components/AdvantageChart";
 import { RemainingFields } from "../components/PrettyValue";
@@ -120,6 +120,8 @@ export function MatchDetail() {
   const [requestMsg, setRequestMsg] = useState<string | null>(null);
   const [showRaw, setShowRaw] = useState(false);
   const [chatFilter, setChatFilter] = useState("");
+  // The Radiant and Dire scoreboards scroll sideways together.
+  const scoreboardScroll = useMemo<ScrollGroup>(() => ({ members: new Set(), echoes: new Set() }), []);
 
   useEffect(() => {
     if (!matchId) return;
@@ -246,8 +248,8 @@ export function MatchDetail() {
 
   const overviewTab = (
     <>
-      <Scoreboard players={radiant} teamLabel="Radiant" className="team-radiant" />
-      <Scoreboard players={dire} teamLabel="Dire" className="team-dire" />
+      <Scoreboard players={radiant} teamLabel="Radiant" className="team-radiant" scrollGroup={scoreboardScroll} />
+      <Scoreboard players={dire} teamLabel="Dire" className="team-dire" scrollGroup={scoreboardScroll} />
 
       {data.players.some((p) => (p.ability_upgrades_arr ?? []).length > 0) && (
         <div className="section">
