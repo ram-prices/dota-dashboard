@@ -661,6 +661,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
               <th className="match-row-lane-cell">
                 <span className="sr-only">Lane outcome</span>
               </th>
+              <th className="match-row-spacer" aria-hidden="true" />
               <th className="match-row-kda-cell" title="Kills">K</th>
               <th className="match-row-kda-cell" title="Deaths">D</th>
               <th className="match-row-kda-cell" title="Assists">A</th>
@@ -715,18 +716,20 @@ export function Dashboard({ accountId }: { accountId: number }) {
                     </span>
                   </td>
                   <td className="match-row-lane-cell">
+                    {/* An arrow rather than W/L letters, so it can't be
+                        mistaken for the match result next to it. */}
                     {lanes[m.match_id] && (
                       <span
-                        className={`lane-pill lane-${lanes[m.match_id]}`}
+                        className={`lane-arrow lane-${lanes[m.match_id]}`}
                         title={laneOutcomeLabel(lanes[m.match_id]) ?? undefined}
+                        aria-label={laneOutcomeLabel(lanes[m.match_id]) ?? undefined}
+                        role="img"
                       >
-                        <span className="lane-pill-arrow" aria-hidden="true">
-                          ↖
-                        </span>
-                        {lanes[m.match_id] === "won" ? "W" : lanes[m.match_id] === "lost" ? "L" : "D"}
+                        {lanes[m.match_id] === "won" ? "▲" : lanes[m.match_id] === "lost" ? "▼" : "▬"}
                       </span>
                     )}
                   </td>
+                  <td className="match-row-spacer" aria-hidden="true" />
                   <td className="match-row-kda-cell">{m.kills}</td>
                   <td className="match-row-kda-cell">{m.deaths}</td>
                   <td className="match-row-kda-cell">{m.assists}</td>

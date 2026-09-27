@@ -656,9 +656,10 @@ tbody tr:last-child td {
 .match-table .match-row-hero-cell {
   padding-left: 20px;
 }
-/* Empty column that takes all the leftover width (every other column
-   stays sized to its own content), which pushes Duration and Mode over
-   to the right edge. */
+/* Empty columns on either side of K/D/A that split the leftover width
+   between them (every other column stays sized to its own content), so
+   K/D/A sits in the middle and Duration/Mode are pushed to the right
+   edge. */
 .match-table .match-row-spacer {
   width: 100%;
   padding: 0;
@@ -760,27 +761,20 @@ tbody tr:last-child td {
   color: var(--text-dim);
   background: color-mix(in srgb, var(--text-dim) 16%, transparent);
 }
-.lane-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-  padding: 1px 5px;
-  border-radius: var(--shape-full);
-  background: var(--md-surface-container-high);
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.6;
+/* Lane outcome: a bare colored arrow (no box), so it reads as a
+   secondary stat rather than a second match result. */
+.lane-arrow {
+  font-size: 12px;
+  line-height: 1;
+  cursor: default;
 }
-.lane-pill-arrow {
-  font-size: 10px;
-}
-.lane-pill.lane-won {
+.lane-arrow.lane-won {
   color: var(--radiant);
 }
-.lane-pill.lane-lost {
+.lane-arrow.lane-lost {
   color: var(--dire);
 }
-.lane-pill.lane-draw {
+.lane-arrow.lane-draw {
   color: var(--text-dim);
 }
 /* Kills, deaths and assists are three narrow columns of their own */
