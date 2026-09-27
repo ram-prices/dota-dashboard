@@ -111,6 +111,7 @@ function HeroTile({ row: r }: { row: HeroRow }) {
         <div
           className="hero-tile-positions"
           title={
+            `Mostly ${positionLabel(mainPosition)}. ` +
             POSITIONS.filter((pos) => r.positions[pos])
               .map((pos) => `P${pos}: ${r.positions[pos]}`)
               .join(" · ") + (r.estimatedPositions > 0 ? ` (${r.estimatedPositions} of ${positionGames} estimated)` : "")
@@ -126,7 +127,7 @@ function HeroTile({ row: r }: { row: HeroRow }) {
             ))}
           </div>
           <span className="hero-tile-position-label">
-            Mostly {positionLabel(mainPosition)?.replace("Position ", "P")}
+            Mostly P{mainPosition}
           </span>
         </div>
       )}
