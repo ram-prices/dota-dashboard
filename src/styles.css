@@ -400,8 +400,96 @@ button {
 .toolbar select:hover {
   background: var(--md-surface-container-highest);
 }
-.match-filters {
-  justify-content: flex-start;
+/* Matches tab filters: one flat panel of labeled fields - the common ones
+   always visible, the rest behind "More filters". */
+.filter-panel {
+  background: var(--panel-bg);
+  border-radius: var(--shape-lg);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px 14px;
+  align-items: start;
+}
+.filter-grid-more {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--md-outline-variant);
+}
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+/* Queue's five chips need about two columns */
+.filter-field-wide {
+  grid-column: span 2;
+}
+@media (max-width: 400px) {
+  .filter-field-wide {
+    grid-column: 1 / -1;
+  }
+}
+.filter-label {
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+}
+.filter-panel select {
+  width: 100%;
+  background: var(--md-surface-container-high);
+  color: var(--text);
+  border: 1px solid transparent;
+  padding: 6px 10px;
+  border-radius: var(--shape-sm);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.filter-panel select:hover {
+  background: var(--md-surface-container-highest);
+}
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+.filter-more-toggle,
+.filter-reset {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--md-primary);
+}
+.filter-more-toggle:hover:not(:disabled),
+.filter-reset:hover:not(:disabled) {
+  background: none;
+  color: var(--md-on-primary-container);
+}
+.filter-reset {
+  color: var(--text-dim);
+}
+.filter-count {
+  display: inline-block;
+  margin-left: 6px;
+  min-width: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
 }
 .filter-chip-group {
   display: flex;

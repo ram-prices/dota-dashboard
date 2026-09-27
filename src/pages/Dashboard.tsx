@@ -138,6 +138,19 @@ export function Dashboard({ accountId }: { accountId: number }) {
   const initialEnemyHero = parseHeroIds(searchParams.get("enemyHero"));
   const initialPatch = Math.floor(Number(searchParams.get("patch"))) || 0;
 
+  // Secondary filters live behind "More filters" - opened from the start
+  // when the URL already has one of them set, so it's never hidden.
+  const [showMoreFilters, setShowMoreFilters] = useState(
+    Boolean(
+      initialTeammateHero.length ||
+        initialEnemyHero.length ||
+        initialGameMode.length ||
+        initialFaction !== "all" ||
+        initialParty !== "all" ||
+        initialPatch,
+    ),
+  );
+
   // undefined while loading; null when profile.json isn't in the data
   // branch (or is for another account) - the header then just shows the
   // account id rather than blocking the whole page on it.
@@ -250,6 +263,41 @@ export function Dashboard({ accountId }: { accountId: number }) {
     if (next.teammateHero !== undefined) setTeammateHeroFilter(next.teammateHero);
     if (next.enemyHero !== undefined) setEnemyHeroFilter(next.enemyHero);
     if (next.patch !== undefined) setPatchFilter(next.patch);
+  }
+
+  // How many of the filters behind "More filters" are set (shown on the
+  // toggle so a hidden active filter is never a surprise).
+  const moreFiltersActive =
+    (teammateHeroFilter.length > 0 ? 1 : 0) +
+    (enemyHeroFilter.length > 0 ? 1 : 0) +
+    (gameModeFilter.length > 0 ? 1 : 0) +
+    (factionFilter !== "all" ? 1 : 0) +
+    (partyFilter !== "all" ? 1 : 0) +
+    (patchFilter ? 1 : 0);
+  const filtersAreDefault =
+    moreFiltersActive === 0 &&
+    heroFilter.length === 0 &&
+    resultFilter === "all" &&
+    timeRangeFilter === "all" &&
+    !turboFilter &&
+    modeFilter.length === DEFAULT_MODE.length &&
+    DEFAULT_MODE.every((m) => modeFilter.includes(m));
+
+  function resetFilters() {
+    updateParams({
+      page: 1,
+      hero: [],
+      result: "all",
+      mode: DEFAULT_MODE,
+      gameMode: [],
+      turbo: false,
+      faction: "all",
+      party: "all",
+      time: "all",
+      teammateHero: [],
+      enemyHero: [],
+      patch: 0,
+    });
   }
 
   // Shared by the initial load and the "Sync games" button below - the
@@ -565,100 +613,149 @@ export function Dashboard({ accountId }: { accountId: number }) {
       </div>
 
       {allMatches && (
-        <div className="toolbar match-filters">
-          <HeroMultiSelect
-            label="All Heroes"
-            options={heroOptions}
-            selected={heroFilter}
-            onChange={(next) => updateParams({ hero: next, page: 1 })}
-          />
-          {extrasByMatchId && (
-            <>
+        <div className="filter-panel">
+          <div className="filter-grid">
+            <div className="filter-field filter-field-wide">
+              <span className="filter-label">Queue</span>
+              <div className="filter-chip-group">
+                {MODE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`filter-chip ${modeFilter.includes(opt.value) ? "filter-chip-active" : ""}`}
+                    onClick={() => {
+                      const isActive = modeFilter.includes(opt.value);
+                      const next = isActive ? modeFilter.filter((v) => v !== opt.value) : [...modeFilter, opt.value];
+                      // Toggling off the last chip in a category (Event, or
+                      // Ranked/Unranked/Bot Match) while the Game Mode filter
+                      // has a selection from that now-hidden category would
+                      // leave it stuck on a hidden option - drop just those.
+                      const eventStillVisible = next.includes("event");
+                      const normalStillVisible = next.some((v) => v !== "event");
+                      const nextGameMode = gameModeFilter.filter((gm) => (isEventGameModeKey(gm) ? eventStillVisible : normalStillVisible));
+                      const gameModeChanged = nextGameMode.length !== gameModeFilter.length;
+                      updateParams(gameModeChanged ? { mode: next, gameMode: nextGameMode, page: 1 } : { mode: next, page: 1 });
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className={`filter-chip ${turboFilter ? "filter-chip-active" : ""}`}
+                  onClick={() => updateParams({ turbo: !turboFilter, page: 1 })}
+                >
+                  Turbo
+                </button>
+              </div>
+            </div>
+            <label className="filter-field">
+              <span className="filter-label">Result</span>
+              <select value={resultFilter} onChange={(e) => updateParams({ result: e.target.value as ResultFilter, page: 1 })}>
+                <option value="all">All</option>
+                <option value="win">Wins</option>
+                <option value="loss">Losses</option>
+                <option value="abandoned">Abandoned</option>
+              </select>
+            </label>
+            <label className="filter-field">
+              <span className="filter-label">Time</span>
+              <select value={timeRangeFilter} onChange={(e) => updateParams({ time: e.target.value as TimeRangeFilter, page: 1 })}>
+                <option value="all">All time</option>
+                {(Object.keys(TIME_RANGE_LABELS) as Array<keyof typeof TIME_RANGE_LABELS>).map((key) => (
+                  <option key={key} value={key}>
+                    {TIME_RANGE_LABELS[key]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="filter-field">
+              <span className="filter-label">Hero</span>
               <HeroMultiSelect
-                label="Any Teammate Hero"
-                options={teammateHeroOptions}
-                selected={teammateHeroFilter}
-                onChange={(next) => updateParams({ teammateHero: next, page: 1 })}
+                label="Any hero"
+                options={heroOptions}
+                selected={heroFilter}
+                onChange={(next) => updateParams({ hero: next, page: 1 })}
               />
-              <HeroMultiSelect
-                label="Any Enemy Hero"
-                options={enemyHeroOptions}
-                selected={enemyHeroFilter}
-                onChange={(next) => updateParams({ enemyHero: next, page: 1 })}
-              />
-            </>
-          )}
-          <select value={resultFilter} onChange={(e) => updateParams({ result: e.target.value as ResultFilter, page: 1 })}>
-            <option value="all">All Results</option>
-            <option value="win">Wins</option>
-            <option value="loss">Losses</option>
-            <option value="abandoned">Abandoned</option>
-          </select>
-          <div className="filter-chip-group">
-            {MODE_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                className={`filter-chip ${modeFilter.includes(opt.value) ? "filter-chip-active" : ""}`}
-                onClick={() => {
-                  const isActive = modeFilter.includes(opt.value);
-                  const next = isActive ? modeFilter.filter((v) => v !== opt.value) : [...modeFilter, opt.value];
-                  // Toggling off the last chip in a category (Event, or
-                  // Ranked/Unranked/Bot Match) while the Game Mode filter
-                  // has a selection from that now-hidden category would
-                  // leave it stuck on a hidden option - drop just those.
-                  const eventStillVisible = next.includes("event");
-                  const normalStillVisible = next.some((v) => v !== "event");
-                  const nextGameMode = gameModeFilter.filter((gm) => (isEventGameModeKey(gm) ? eventStillVisible : normalStillVisible));
-                  const gameModeChanged = nextGameMode.length !== gameModeFilter.length;
-                  updateParams(gameModeChanged ? { mode: next, gameMode: nextGameMode, page: 1 } : { mode: next, page: 1 });
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
-            <button
-              type="button"
-              className={`filter-chip ${turboFilter ? "filter-chip-active" : ""}`}
-              onClick={() => updateParams({ turbo: !turboFilter, page: 1 })}
-            >
-              Turbo
-            </button>
+            </div>
           </div>
-          <MultiSelect
-            label="All Game Modes"
-            options={gameModeOptions.map((key) => ({ value: key, label: gameModeKeyLabel(key) }))}
-            selected={gameModeFilter}
-            onChange={(next) => updateParams({ gameMode: next, page: 1 })}
-          />
-          <select value={factionFilter} onChange={(e) => updateParams({ faction: e.target.value as FactionFilter, page: 1 })}>
-            <option value="all">Radiant/Dire</option>
-            <option value="radiant">Radiant</option>
-            <option value="dire">Dire</option>
-          </select>
-          <select value={partyFilter} onChange={(e) => updateParams({ party: e.target.value as PartyFilter, page: 1 })}>
-            <option value="all">Solo/Party</option>
-            <option value="solo">Solo</option>
-            <option value="party">Party</option>
-          </select>
-          <select value={timeRangeFilter} onChange={(e) => updateParams({ time: e.target.value as TimeRangeFilter, page: 1 })}>
-            <option value="all">All Time</option>
-            {(Object.keys(TIME_RANGE_LABELS) as Array<keyof typeof TIME_RANGE_LABELS>).map((key) => (
-              <option key={key} value={key}>
-                {TIME_RANGE_LABELS[key]}
-              </option>
-            ))}
-          </select>
-          {extrasByMatchId && (
-            <select value={patchFilter} onChange={(e) => updateParams({ patch: Number(e.target.value), page: 1 })}>
-              <option value={0}>All Patches</option>
-              {patchOptions.map((id) => (
-                <option key={id} value={id}>
-                  {patchLabel(id)}
-                </option>
-              ))}
-            </select>
+
+          {showMoreFilters && (
+            <div className="filter-grid filter-grid-more">
+              {extrasByMatchId && (
+                <>
+                  <div className="filter-field">
+                    <span className="filter-label">Teammate hero</span>
+                    <HeroMultiSelect
+                      label="Any"
+                      options={teammateHeroOptions}
+                      selected={teammateHeroFilter}
+                      onChange={(next) => updateParams({ teammateHero: next, page: 1 })}
+                    />
+                  </div>
+                  <div className="filter-field">
+                    <span className="filter-label">Enemy hero</span>
+                    <HeroMultiSelect
+                      label="Any"
+                      options={enemyHeroOptions}
+                      selected={enemyHeroFilter}
+                      onChange={(next) => updateParams({ enemyHero: next, page: 1 })}
+                    />
+                  </div>
+                </>
+              )}
+              <div className="filter-field">
+                <span className="filter-label">Game mode</span>
+                <MultiSelect
+                  label="Any"
+                  options={gameModeOptions.map((key) => ({ value: key, label: gameModeKeyLabel(key) }))}
+                  selected={gameModeFilter}
+                  onChange={(next) => updateParams({ gameMode: next, page: 1 })}
+                />
+              </div>
+              <label className="filter-field">
+                <span className="filter-label">Side</span>
+                <select value={factionFilter} onChange={(e) => updateParams({ faction: e.target.value as FactionFilter, page: 1 })}>
+                  <option value="all">Either</option>
+                  <option value="radiant">Radiant</option>
+                  <option value="dire">Dire</option>
+                </select>
+              </label>
+              <label className="filter-field">
+                <span className="filter-label">Solo / Party</span>
+                <select value={partyFilter} onChange={(e) => updateParams({ party: e.target.value as PartyFilter, page: 1 })}>
+                  <option value="all">Either</option>
+                  <option value="solo">Solo</option>
+                  <option value="party">Party</option>
+                </select>
+              </label>
+              {extrasByMatchId && (
+                <label className="filter-field">
+                  <span className="filter-label">Patch</span>
+                  <select value={patchFilter} onChange={(e) => updateParams({ patch: Number(e.target.value), page: 1 })}>
+                    <option value={0}>All</option>
+                    {patchOptions.map((id) => (
+                      <option key={id} value={id}>
+                        {patchLabel(id)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
           )}
+
+          <div className="filter-actions">
+            <button type="button" className="filter-more-toggle" onClick={() => setShowMoreFilters((v) => !v)}>
+              {showMoreFilters ? "Fewer filters" : "More filters"}
+              {moreFiltersActive > 0 && <span className="filter-count">{moreFiltersActive}</span>}
+            </button>
+            {!filtersAreDefault && (
+              <button type="button" className="filter-reset" onClick={resetFilters}>
+                Reset
+              </button>
+            )}
+          </div>
         </div>
       )}
 
