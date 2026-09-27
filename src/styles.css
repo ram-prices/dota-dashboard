@@ -1083,6 +1083,18 @@ tbody tr:last-child td {
 .scoreboard-items-cell {
   min-width: 236px;
 }
+/* Every stat column is centered; the hero/player and Items columns (and
+   the team-name header over the hero columns) stay left-aligned. */
+.scoreboard th,
+.scoreboard td {
+  text-align: center;
+}
+.scoreboard thead th:first-child,
+.scoreboard .hero-icon-cell,
+.scoreboard .hero-name-cell,
+.scoreboard .scoreboard-items-cell {
+  text-align: left;
+}
 /* Same idea for the number columns, which otherwise size to their widest
    value (e.g. a 1- vs 2-digit kill count, 4- vs 5-digit hero healing)
    and drift out of line between the two tables. Body cells only - the

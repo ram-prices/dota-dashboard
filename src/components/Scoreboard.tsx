@@ -18,9 +18,9 @@ function WardStat({ obs, sen, bestObs, bestSen }: { obs: number; sen: number; be
 }
 
 // Every stat the scoreboard can underline as the best in the match, and how
-// to read it off a player. Deaths is the one where lower is better.
+// to read it off a player (level isn't one). Deaths is the one where lower
+// is better.
 const BEST_STATS = {
-  level: (p: MatchPlayer) => p.level,
   kills: (p: MatchPlayer) => p.kills,
   deaths: (p: MatchPlayer) => p.deaths,
   assists: (p: MatchPlayer) => p.assists,
@@ -219,7 +219,7 @@ export function Scoreboard({
                   </div>
                 )}
               </td>
-              <td>{cell("level", p.level)}</td>
+              <td>{p.level}</td>
               <td className="scoreboard-kda-cell">{cell("kills", p.kills)}</td>
               <td className="scoreboard-kda-cell">{cell("deaths", p.deaths)}</td>
               <td className="scoreboard-kda-cell">{cell("assists", p.assists)}</td>
