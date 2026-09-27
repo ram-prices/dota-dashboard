@@ -610,6 +610,14 @@ tbody tr:last-child td {
   font-size: 10px;
   font-weight: 700;
 }
+/* A position estimated from hero + farm (unparsed match), not OpenDota's
+   own: faded and italic so it never passes for real data. */
+.role-badge-estimated {
+  opacity: 0.6;
+  font-style: italic;
+  background: transparent;
+  cursor: help;
+}
 
 /* ============================================================
    Matches list - a real <table>, so column widths are computed by the

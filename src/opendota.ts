@@ -2,6 +2,7 @@ import { getApiKey } from "./settings";
 import { cached, peekCached, writeCached } from "./cache";
 import { isRadiant } from "./dota";
 import type {
+  HeroPositionPriors,
   HeroStat,
   MatchDetail,
   MatchExtras,
@@ -27,6 +28,7 @@ const DATA_BRANCH_INDEX = `${DATA_BRANCH_ROOT}/matches-index.json`;
 const DATA_BRANCH_EXTRAS_INDEX = `${DATA_BRANCH_ROOT}/match-extras-index.json`;
 const DATA_BRANCH_PLAYERS_INDEX = `${DATA_BRANCH_ROOT}/match-players-index.json`;
 const DATA_BRANCH_PROFILE = `${DATA_BRANCH_ROOT}/profile.json`;
+const DATA_BRANCH_HERO_POSITIONS = `${DATA_BRANCH_ROOT}/hero-positions.json`;
 
 // The data branch changes as you play (request-parse.yml pushes every 20
 // minutes), so indexes are only cached briefly.
@@ -172,6 +174,12 @@ export function getMatchIndexForStats(): Promise<MatchSummary[]> {
 
 export function getMatchExtrasIndex(): Promise<MatchExtras[] | null> {
   return getStoredMatchExtrasIndex();
+}
+
+// Position statistics for estimating a position where a match has none -
+// see estimateTeamPositions() in dota.ts. null when the file isn't there.
+export function getHeroPositionPriors(): Promise<HeroPositionPriors | null> {
+  return cached("hero-positions", LIST_TTL_MS, () => fetchRepoJson<HeroPositionPriors>(DATA_BRANCH_HERO_POSITIONS));
 }
 
 function won(m: MatchSummary): boolean {

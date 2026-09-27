@@ -217,7 +217,7 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Rebuild match-extras-index.json and match-players-index.json
+      - name: Rebuild match-extras-index.json, match-players-index.json and hero-positions.json
         run: |
           set -uo pipefail
 
@@ -242,7 +242,20 @@ jobs:
           jq -s -c 'sort_by(.match_id) | reverse' /tmp/extras.jsonl > match-extras-index.json
           jq -s -c 'sort_by(.match_id) | reverse' /tmp/players.jsonl > match-players-index.json
 
-          git add match-extras-index.json match-players-index.json
+          # hero-positions.json: how often each hero - and each team farm
+          # rank - ends up at each position (1-5), over every player whose
+          # position OpenDota estimated. The site uses it to estimate a
+          # position for unparsed matches, which don't have one.
+          find matches -name '*.json' -print0 | xargs -0 -n 500 jq -c -f "$scripts/hero-positions.jq" > /tmp/positions.jsonl
+          jq -s -c '
+            map(.[]) as $rows
+            | {
+                samples: ($rows | length),
+                hero: (reduce $rows[] as $r ({}; .[$r[0] | tostring] |= ((. // [0, 0, 0, 0, 0]) | .[$r[2] - 1] += 1))),
+                gpmRank: (reduce $rows[] as $r ({}; .[$r[1] | tostring] |= ((. // [0, 0, 0, 0, 0]) | .[$r[2] - 1] += 1)))
+              }' /tmp/positions.jsonl > hero-positions.json
+
+          git add match-extras-index.json match-players-index.json hero-positions.json
           if ! git diff --cached --quiet; then
             git commit -q -m "Rebuild match extras/players indexes [skip ci]"
             for attempt in 1 2 3; do

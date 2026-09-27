@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { errorMessage, getMatch, getMatchExtrasIndex, getMatchIndexForStats, getProfile, getWinLoss, syncRecentMatches } from "../opendota";
+import {
+  errorMessage,
+  getHeroPositionPriors,
+  getMatch,
+  getMatchExtrasIndex,
+  getMatchIndexForStats,
+  getProfile,
+  getWinLoss,
+  syncRecentMatches,
+} from "../opendota";
 import type { MatchExtras, MatchSummary, PlayerProfile, WinLoss } from "../types";
 import { HeroMultiSelect } from "../components/HeroMultiSelect";
 import { MultiSelect } from "../components/MultiSelect";
@@ -13,6 +22,7 @@ import {
   heroName,
   isAbandoned,
   isEventGameModeKey,
+  estimateTeamPositions,
   isRadiant,
   laneOutcome,
   laneOutcomeLabel,
@@ -157,7 +167,9 @@ export function Dashboard({ accountId }: { accountId: number }) {
 
   // undefined = still loading, null = loaded but no rank/skill data available
   const [ranks, setRanks] = useState<Record<number, RankBadge | undefined>>({});
-  const [roles, setRoles] = useState<Record<number, number | null | undefined>>({});
+  // estimated = no position in the match data (unparsed) - filled in by
+  // estimateTeamPositions() instead, and shown differently.
+  const [roles, setRoles] = useState<Record<number, { pos: number; estimated: boolean } | null | undefined>>({});
   const [lanes, setLanes] = useState<Record<number, LaneOutcome | null | undefined>>({});
 
   const [syncing, setSyncing] = useState(false);
@@ -439,9 +451,10 @@ export function Dashboard({ accountId }: { accountId: number }) {
     setRanks({});
     setRoles({});
     setLanes({});
+    const priorsPromise = getHeroPositionPriors().catch(() => null);
     for (const match of pageMatches) {
       getMatch(match.match_id)
-        .then((detail) => {
+        .then(async (detail) => {
           const tier = matchRankTier(detail.players.map((p) => p.rank_tier));
           const badge: RankBadge =
             tier != null
@@ -453,7 +466,16 @@ export function Dashboard({ accountId }: { accountId: number }) {
           setRanks((prev) => ({ ...prev, [match.match_id]: badge }));
 
           const self = detail.players.find((p) => p.player_slot === match.player_slot);
-          setRoles((prev) => ({ ...prev, [match.match_id]: self?.position_est ?? null }));
+          let role: { pos: number; estimated: boolean } | null = null;
+          if (self?.position_est) {
+            role = { pos: self.position_est, estimated: false };
+          } else if (self) {
+            const priors = await priorsPromise;
+            const team = detail.players.filter((p) => isRadiant(p.player_slot) === isRadiant(self.player_slot));
+            const pos = priors ? estimateTeamPositions(team, priors).get(self.player_slot) : undefined;
+            if (pos) role = { pos, estimated: true };
+          }
+          setRoles((prev) => ({ ...prev, [match.match_id]: role }));
 
           setLanes((prev) => ({ ...prev, [match.match_id]: laneOutcome(detail, match.player_slot) }));
         })
@@ -704,9 +726,17 @@ export function Dashboard({ accountId }: { accountId: number }) {
                     </span>
                   </td>
                   <td className="match-row-pos-cell">
-                    {positionShort(roles[m.match_id]) && (
-                      <span className="role-badge" title={positionLabel(roles[m.match_id]) ?? undefined}>
-                        {positionShort(roles[m.match_id])}
+                    {roles[m.match_id] && (
+                      <span
+                        className={`role-badge${roles[m.match_id]!.estimated ? " role-badge-estimated" : ""}`}
+                        title={
+                          roles[m.match_id]!.estimated
+                            ? `${positionLabel(roles[m.match_id]!.pos)} (estimated from hero and farm - the replay was never parsed)`
+                            : (positionLabel(roles[m.match_id]!.pos) ?? undefined)
+                        }
+                      >
+                        {positionShort(roles[m.match_id]!.pos)}
+                        {roles[m.match_id]!.estimated && "?"}
                       </span>
                     )}
                   </td>

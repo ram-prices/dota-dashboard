@@ -57,6 +57,15 @@ export interface MatchPlayersEntry {
   players: MatchPlayerTuple[];
 }
 
+// hero-positions.json (see .github/scripts/hero-positions.jq): how many
+// times each hero, and each team farm (GPM) rank, ended up at positions
+// 1-5 across every stored player OpenDota estimated a position for.
+export interface HeroPositionPriors {
+  samples: number;
+  hero: Record<string, number[]>;
+  gpmRank: Record<string, number[]>;
+}
+
 export interface HeroStat {
   hero_id: number;
   last_played: number;
