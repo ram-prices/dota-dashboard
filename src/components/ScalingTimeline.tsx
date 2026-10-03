@@ -5,8 +5,9 @@ import type { MatchDetail, MatchPlayer } from "../types";
 // Horizontal scale: pixels per game minute. Long games just scroll further.
 const PX_PER_MIN = 26;
 // Where the timeline starts - early enough to show starting-item purchases
-// and pre-horn kills (both can happen before 0:00).
-const START_SECONDS = -90;
+// and pre-horn kills (both can happen before 0:00, starting items from
+// about -1:30), with some margin so they clear the pinned name column.
+const START_SECONDS = -150;
 const ITEM_SIZE = 18;
 const ITEM_LANES = 3;
 const BAR_AREA = 34;
