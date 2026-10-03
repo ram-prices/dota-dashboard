@@ -10,7 +10,12 @@ const PX_PER_MIN = 26;
 const START_SECONDS = -150;
 const ITEM_SIZE = 18;
 const ITEM_LANES = 3;
-const BAR_AREA = 34;
+const BAR_AREA = 30;
+// Each row, top to bottom: item lanes, then the net worth bars standing on a
+// baseline, then kill/death markers just under that baseline - so every
+// mark sits with its own player's bars, never next to the row above's.
+const ITEM_TOP = 6;
+const BASELINE = 80; // px from the top of the row
 // Sticky hero/player column - kept in sync with .scaling-label in styles.css.
 const LABEL_WIDTH = 170;
 
@@ -152,6 +157,8 @@ export function ScalingTimeline({ match, players }: { match: MatchDetail; player
                     <span key={m} className="scaling-gridline" style={{ left: x(m * 60) }} />
                   ))}
 
+                  <span className="scaling-baseline" style={{ top: BASELINE }} />
+
                   {gain.map((g, minute) => (
                     <span
                       key={minute}
@@ -159,6 +166,7 @@ export function ScalingTimeline({ match, players }: { match: MatchDetail; player
                       style={{
                         left: x(minute * 60) + 2,
                         width: PX_PER_MIN - 4,
+                        top: BASELINE - Math.max(1, (g / maxGain) * BAR_AREA),
                         height: Math.max(1, (g / maxGain) * BAR_AREA),
                       }}
                       title={`${minute}:00-${minute + 1}:00: +${g.toLocaleString()} net worth`}
@@ -174,7 +182,7 @@ export function ScalingTimeline({ match, players }: { match: MatchDetail; player
                         alt={info.name}
                         title={`${info.name} - ${formatGameTime(it.time)}`}
                         className="scaling-item"
-                        style={{ left: x(it.time) - ITEM_SIZE / 2, top: 14 + it.lane * 14 }}
+                        style={{ left: x(it.time) - ITEM_SIZE / 2, top: ITEM_TOP + it.lane * 14 }}
                         loading="lazy"
                       />
                     ) : null;
@@ -184,7 +192,7 @@ export function ScalingTimeline({ match, players }: { match: MatchDetail; player
                     <span
                       key={`k${i}`}
                       className="scaling-marker scaling-kill"
-                      style={{ left: x(k.time) }}
+                      style={{ left: x(k.time), top: BASELINE - BAR_AREA }}
                       title={`Killed ${unitLabel(k.key)} - ${formatGameTime(k.time)}`}
                     >
                       ▲
@@ -194,7 +202,7 @@ export function ScalingTimeline({ match, players }: { match: MatchDetail; player
                     <span
                       key={`d${i}`}
                       className="scaling-marker scaling-death"
-                      style={{ left: x(d.time) }}
+                      style={{ left: x(d.time), top: BASELINE - BAR_AREA }}
                       title={`Killed by ${unitLabel(d.key)} - ${formatGameTime(d.time)}`}
                     >
                       ✕

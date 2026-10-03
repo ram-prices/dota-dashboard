@@ -1944,6 +1944,10 @@ tbody tr:last-child td {
 .scaling-row-wrap {
   display: flex;
 }
+/* Clear break between players' rows */
+.scaling-row-wrap + .scaling-row-wrap:not(.scaling-axis-row) {
+  border-top: 2px solid var(--md-surface-dim);
+}
 .scaling-row-wrap:nth-child(odd):not(.scaling-axis-row) {
   background: var(--row-stripe);
 }
@@ -1997,8 +2001,16 @@ tbody tr:last-child td {
 }
 .scaling-track {
   position: relative;
-  height: 72px;
+  height: 96px;
   flex-shrink: 0;
+}
+/* The line this row's net worth bars stand on */
+.scaling-baseline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--md-outline);
 }
 .scaling-gridline {
   position: absolute;
@@ -2009,7 +2021,6 @@ tbody tr:last-child td {
 }
 .scaling-bar {
   position: absolute;
-  bottom: 0;
   border-radius: 2px 2px 0 0;
   opacity: 0.45;
 }
@@ -2034,14 +2045,25 @@ tbody tr:last-child td {
   z-index: 2;
   transform: scale(1.8);
 }
+/* A kill/death: a faint guide line down through this row's bar area, with
+   the symbol just under the baseline. Positioned (top/left) from
+   ScalingTimeline.tsx; the box spans from the bar area's top to the
+   symbol. */
 .scaling-marker {
   position: absolute;
-  top: 1px;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 44px;
+  width: 12px;
   transform: translateX(-50%);
   font-size: 10px;
   line-height: 1;
   cursor: default;
+  --guide: color-mix(in srgb, currentColor 40%, transparent);
+  background: linear-gradient(var(--guide), var(--guide)) center top / 1px 30px no-repeat;
 }
 .scaling-kill {
   color: var(--radiant);
