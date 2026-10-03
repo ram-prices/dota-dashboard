@@ -151,6 +151,8 @@ export interface MatchPlayer {
   dn_t?: number[];
   purchase_log?: LogEntry[];
   kills_log?: LogEntry[];
+  // key = whoever got the kill (a hero, or a creep/tower/Roshan unit name)
+  deaths_log?: (LogEntry & { time_dead?: number; gold_lost?: number })[];
   runes_log?: LogEntry[];
   buyback_log?: LogEntry[];
   obs_log?: LogEntry[];

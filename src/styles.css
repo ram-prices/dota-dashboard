@@ -1910,3 +1910,144 @@ tbody tr:last-child td {
 .pretty-list li {
   margin-bottom: 4px;
 }
+
+/* ============================================================
+   Scaling tab (ScalingTimeline) - one timeline row per player: item
+   purchases, kills/deaths and per-minute net worth gain bars, all on a
+   shared time axis that scrolls sideways together.
+   ============================================================ */
+.scaling-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+.scaling-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+.scaling-legend {
+  color: var(--text-dim);
+}
+.scaling-scroll {
+  overflow-x: auto;
+  background: var(--panel-bg);
+  border-radius: var(--shape-lg);
+}
+.scaling-row-wrap {
+  display: flex;
+}
+.scaling-row-wrap:nth-child(odd):not(.scaling-axis-row) {
+  background: var(--row-stripe);
+}
+.scaling-label {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  flex: 0 0 170px;
+  width: 170px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  background: var(--md-surface-container);
+  font-weight: 700;
+  color: var(--text);
+  min-width: 0;
+}
+.scaling-row-wrap:nth-child(odd):not(.scaling-axis-row) .scaling-label {
+  background: var(--row-stripe);
+}
+.scaling-axis-row .scaling-label {
+  background: var(--panel-header);
+}
+.scaling-label.team-radiant {
+  box-shadow: inset 3px 0 0 var(--radiant);
+}
+.scaling-label.team-dire {
+  box-shadow: inset 3px 0 0 var(--dire);
+}
+.scaling-label-text {
+  min-width: 0;
+}
+.scaling-label-text div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scaling-axis {
+  position: relative;
+  height: 26px;
+  background: var(--panel-header);
+}
+.scaling-tick {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.scaling-track {
+  position: relative;
+  height: 72px;
+  flex-shrink: 0;
+}
+.scaling-gridline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--md-outline-variant);
+}
+.scaling-bar {
+  position: absolute;
+  bottom: 0;
+  border-radius: 2px 2px 0 0;
+  opacity: 0.45;
+}
+.scaling-bar:hover {
+  opacity: 0.8;
+}
+.scaling-bar-radiant {
+  background: var(--radiant);
+}
+.scaling-bar-dire {
+  background: var(--dire);
+}
+.scaling-item {
+  position: absolute;
+  z-index: 1;
+  width: 18px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+.scaling-item:hover {
+  z-index: 2;
+  transform: scale(1.8);
+}
+.scaling-marker {
+  position: absolute;
+  top: 1px;
+  z-index: 1;
+  transform: translateX(-50%);
+  font-size: 10px;
+  line-height: 1;
+  cursor: default;
+}
+.scaling-kill {
+  color: var(--radiant);
+}
+.scaling-death {
+  color: var(--dire);
+  font-weight: 800;
+}
+

@@ -20,6 +20,7 @@ import {
   skillBracketLabel,
 } from "../dota";
 import { bestStats, Scoreboard, type ScrollGroup } from "../components/Scoreboard";
+import { ScalingTimeline } from "../components/ScalingTimeline";
 import { LaneMatchups } from "../components/LaneMatchups";
 import { AdvantageChart } from "../components/AdvantageChart";
 import { RemainingFields } from "../components/PrettyValue";
@@ -594,6 +595,7 @@ export function MatchDetail() {
 
   const tabs: Tab[] = [
     { id: "overview", label: "Overview", content: overviewTab },
+    { id: "scaling", label: "Scaling", content: <ScalingTimeline match={data} players={[...radiant, ...dire]} /> },
     { id: "graphs", label: "Graphs", content: graphsTab },
     { id: "laning", label: "Laning", content: laningTab },
     { id: "farm", label: "Farm", content: farmTab },
