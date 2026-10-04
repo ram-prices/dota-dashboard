@@ -914,7 +914,10 @@ tbody tr:last-child td {
     width: 18px;
     height: 18px;
   }
-  .match-table .match-row-matched-cell {
+  .match-table .match-row-matched-cell,
+  .match-table .match-row-pos-cell,
+  .match-table .match-row-result-cell,
+  .match-table .match-row-lane-cell {
     padding-left: 2px;
     padding-right: 2px;
   }
