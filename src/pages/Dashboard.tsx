@@ -68,6 +68,7 @@ const MODE_OPTIONS: { value: ModeFilterKey; label: string }[] = [
   { value: "event", label: "Event" },
 ];
 const DEFAULT_MODE: ModeFilterKey[] = [7, 0];
+type HeroJoin = "and" | "or";
 
 const TIME_RANGE_LABELS: Record<Exclude<TimeRangeFilter, "all">, string> = {
   "7d": "Last 7 Days",
@@ -143,6 +144,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
     return n >= 1 && n <= 5 ? n : 0;
   };
   const initialTeammatePos = parsePos(searchParams.get("teamPos"));
+  const initialHeroJoin: HeroJoin = searchParams.get("heroJoin") === "or" ? "or" : "and";
   const initialEnemyPos = parsePos(searchParams.get("enemyPos"));
   const initialPatch = Math.floor(Number(searchParams.get("patch"))) || 0;
 
@@ -190,6 +192,9 @@ export function Dashboard({ accountId }: { accountId: number }) {
   // those heroes; on its own, to any teammate/enemy.
   const [teammatePosFilter, setTeammatePosFilter] = useState(initialTeammatePos);
   const [enemyPosFilter, setEnemyPosFilter] = useState(initialEnemyPos);
+  // How the teammate condition (hero/position) and the enemy condition
+  // combine when both are set: both must match ("and") or either ("or").
+  const [heroJoin, setHeroJoin] = useState<HeroJoin>(initialHeroJoin);
   const [patchFilter, setPatchFilter] = useState(initialPatch);
 
   // undefined = still loading, null = loaded but no rank/skill data available
@@ -216,6 +221,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
     enemyHero?: number[];
     teammatePos?: number;
     enemyPos?: number;
+    heroJoin?: HeroJoin;
     patch?: number;
   }) {
     const merged = {
@@ -232,6 +238,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
       enemyHero: enemyHeroFilter,
       teammatePos: teammatePosFilter,
       enemyPos: enemyPosFilter,
+      heroJoin,
       patch: patchFilter,
       ...next,
     };
@@ -267,6 +274,8 @@ export function Dashboard({ accountId }: { accountId: number }) {
         else params.set("teamPos", String(merged.teammatePos));
         if (!merged.enemyPos) params.delete("enemyPos");
         else params.set("enemyPos", String(merged.enemyPos));
+        if (merged.heroJoin === "and") params.delete("heroJoin");
+        else params.set("heroJoin", merged.heroJoin);
         if (!merged.patch) params.delete("patch");
         else params.set("patch", String(merged.patch));
         return params;
@@ -286,6 +295,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
     if (next.enemyHero !== undefined) setEnemyHeroFilter(next.enemyHero);
     if (next.teammatePos !== undefined) setTeammatePosFilter(next.teammatePos);
     if (next.enemyPos !== undefined) setEnemyPosFilter(next.enemyPos);
+    if (next.heroJoin !== undefined) setHeroJoin(next.heroJoin);
     if (next.patch !== undefined) setPatchFilter(next.patch);
   }
 
@@ -324,6 +334,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
       enemyHero: [],
       teammatePos: 0,
       enemyPos: 0,
+      heroJoin: "and",
       patch: 0,
     });
   }
@@ -480,45 +491,43 @@ export function Dashboard({ accountId }: { accountId: number }) {
         if (partyFilter === "party" && solo) return false;
       }
       if (cutoff != null && m.start_time < cutoff) return false;
-      if (teammateHeroFilter.length > 0 || enemyHeroFilter.length > 0 || teammatePosFilter || enemyPosFilter || patchFilter) {
+      const teamCondition = teammateHeroFilter.length > 0 || teammatePosFilter > 0;
+      const enemyCondition = enemyHeroFilter.length > 0 || enemyPosFilter > 0;
+      if (teamCondition || enemyCondition || patchFilter) {
         const extra = extrasByMatchId?.get(m.match_id);
         if (!extra) return false;
-        if (teammateHeroFilter.length > 0 && !teammatePosFilter) {
-          const mySide = isRadiant(m.player_slot) ? extra.radiant : extra.dire;
-          const hasAny = teammateHeroFilter.some((h) => h !== m.hero_id && mySide.includes(h));
-          if (!hasAny) return false;
-        }
-        if (enemyHeroFilter.length > 0 && !enemyPosFilter) {
-          const enemySide = isRadiant(m.player_slot) ? extra.dire : extra.radiant;
-          const hasAny = enemyHeroFilter.some((h) => enemySide.includes(h));
-          if (!hasAny) return false;
-        }
-        // With a position picked: some teammate/enemy (one of the picked
-        // heroes, if any) played that position - real or estimated, the
-        // same positions the table shows.
-        if (teammatePosFilter) {
-          const lineup = isRadiant(m.player_slot) ? extra.radiant_lineup : extra.dire_lineup;
-          if (!lineup) return false;
-          const positions = lineupPositions(lineup, positionPriors);
-          const hasAny = lineup.some(
-            ([heroId], i) =>
-              heroId !== m.hero_id &&
-              positions[i]?.pos === teammatePosFilter &&
-              (teammateHeroFilter.length === 0 || teammateHeroFilter.includes(heroId)),
-          );
-          if (!hasAny) return false;
-        }
-        if (enemyPosFilter) {
-          const lineup = isRadiant(m.player_slot) ? extra.dire_lineup : extra.radiant_lineup;
-          if (!lineup) return false;
-          const positions = lineupPositions(lineup, positionPriors);
-          const hasAny = lineup.some(
-            ([heroId], i) =>
-              positions[i]?.pos === enemyPosFilter && (enemyHeroFilter.length === 0 || enemyHeroFilter.includes(heroId)),
-          );
-          if (!hasAny) return false;
-        }
         if (patchFilter && extra.patch !== patchFilter) return false;
+
+        // One side's condition: one of its picked heroes (any hero, if none
+        // picked) is on that side - and, with a position picked, played that
+        // position (real or estimated, the same positions the table shows).
+        const sideMatches = (side: "team" | "enemy"): boolean => {
+          const heroes = side === "team" ? teammateHeroFilter : enemyHeroFilter;
+          const pos = side === "team" ? teammatePosFilter : enemyPosFilter;
+          const onMySide = side === "team";
+          if (!pos) {
+            const heroIds = isRadiant(m.player_slot) === onMySide ? extra.radiant : extra.dire;
+            return heroes.some((h) => (!onMySide || h !== m.hero_id) && heroIds.includes(h));
+          }
+          const lineup = isRadiant(m.player_slot) === onMySide ? extra.radiant_lineup : extra.dire_lineup;
+          if (!lineup) return false;
+          const positions = lineupPositions(lineup, positionPriors);
+          return lineup.some(
+            ([heroId], i) =>
+              (!onMySide || heroId !== m.hero_id) &&
+              positions[i]?.pos === pos &&
+              (heroes.length === 0 || heroes.includes(heroId)),
+          );
+        };
+
+        if (teamCondition && enemyCondition) {
+          const ok = heroJoin === "or" ? sideMatches("team") || sideMatches("enemy") : sideMatches("team") && sideMatches("enemy");
+          if (!ok) return false;
+        } else if (teamCondition && !sideMatches("team")) {
+          return false;
+        } else if (enemyCondition && !sideMatches("enemy")) {
+          return false;
+        }
       }
       return true;
     });
@@ -536,6 +545,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
     enemyHeroFilter,
     teammatePosFilter,
     enemyPosFilter,
+    heroJoin,
     patchFilter,
     extrasByMatchId,
     positionPriors,
@@ -745,15 +755,6 @@ export function Dashboard({ accountId }: { accountId: number }) {
                       onChange={(next) => updateParams({ teammateHero: next, page: 1 })}
                     />
                   </div>
-                  <div className="filter-field">
-                    <span className="filter-label">Enemy hero</span>
-                    <HeroMultiSelect
-                      label="Any"
-                      options={enemyHeroOptions}
-                      selected={enemyHeroFilter}
-                      onChange={(next) => updateParams({ enemyHero: next, page: 1 })}
-                    />
-                  </div>
                   <label
                     className="filter-field"
                     title="With teammate heroes picked: one of them played this position. Otherwise: any teammate did."
@@ -768,6 +769,32 @@ export function Dashboard({ accountId }: { accountId: number }) {
                       ))}
                     </select>
                   </label>
+                  {(teammateHeroFilter.length > 0 || teammatePosFilter > 0) && (enemyHeroFilter.length > 0 || enemyPosFilter > 0) && (
+                    <div className="filter-field">
+                      <span className="filter-label">Teammate &amp; enemy</span>
+                      <div className="filter-chip-group">
+                        {(["and", "or"] as const).map((join) => (
+                          <button
+                            key={join}
+                            type="button"
+                            className={`filter-chip ${heroJoin === join ? "filter-chip-active" : ""}`}
+                            onClick={() => updateParams({ heroJoin: join, page: 1 })}
+                          >
+                            {join === "and" ? "Both match" : "Either matches"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="filter-field">
+                    <span className="filter-label">Enemy hero</span>
+                    <HeroMultiSelect
+                      label="Any"
+                      options={enemyHeroOptions}
+                      selected={enemyHeroFilter}
+                      onChange={(next) => updateParams({ enemyHero: next, page: 1 })}
+                    />
+                  </div>
                   <label
                     className="filter-field"
                     title="With enemy heroes picked: one of them played this position. Otherwise: any enemy did."
