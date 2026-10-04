@@ -166,7 +166,7 @@ export function getMatchExtrasIndex(): Promise<MatchExtras[] | null> {
 }
 
 // Position statistics for estimating a position where a match has none -
-// see estimateTeamPositions() in dota.ts. null when the file isn't there.
+// see lineupPositions() in dota.ts. null when the file isn't there.
 export function getHeroPositionPriors(): Promise<HeroPositionPriors | null> {
   return cached("hero-positions", LIST_TTL_MS, () => fetchRepoJson<HeroPositionPriors>(DATA_BRANCH_HERO_POSITIONS));
 }

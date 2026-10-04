@@ -4,7 +4,7 @@ import itemsData from "./data/items.json";
 import itemsByNameData from "./data/itemsByName.json";
 import abilitiesData from "./data/abilities.json";
 import patchesData from "./data/patches.json";
-import type { HeroPositionPriors, LogEntry, MatchDetail, MatchExtras, MatchPlayer, MatchSummary, ObjectiveEntry } from "./types";
+import type { HeroPositionPriors, LineupEntry, LogEntry, MatchDetail, MatchExtras, MatchPlayer, MatchSummary, ObjectiveEntry } from "./types";
 
 const CDN = "https://cdn.cloudflare.steamstatic.com";
 
@@ -338,9 +338,16 @@ export function positionLabel(pos: number | undefined | null): string | null {
 // the single most likely assignment for the whole team, each position used
 // at most once, rather than guessing each player independently. Tested
 // against matches with known positions: ~69% exact, ~91% core vs support.
-// Returns positions aligned with `team` (0 = couldn't estimate).
-function estimatePositions(team: { heroId: number; gpm: number }[], priors: HeroPositionPriors): number[] {
-  if (team.length === 0 || team.length > 5) return team.map(() => 0);
+// Players whose position OpenDota already knows (`known`) keep it; only the
+// rest are estimated, around them. Returns positions aligned with `team`
+// (0 = couldn't estimate).
+function estimatePositions(
+  team: { heroId: number; gpm: number; known?: number | null }[],
+  priors: HeroPositionPriors | null,
+): number[] {
+  const isKnown = (pos: number | null | undefined): pos is number => pos != null && pos >= 1 && pos <= 5;
+  if (team.every((p) => isKnown(p.known))) return team.map((p) => p.known as number);
+  if (!priors || team.length === 0 || team.length > 5) return team.map((p) => (isKnown(p.known) ? p.known : 0));
 
   // Laplace-smoothed log P(position | counts) - a hero with few samples
   // falls back toward "any position", not to impossible.
@@ -368,8 +375,9 @@ function estimatePositions(team: { heroId: number; gpm: number }[], priors: Hero
       }
       return;
     }
+    const fixed = team[i].known;
     for (let pos = 1; pos <= 5; pos++) {
-      if (used.has(pos)) continue;
+      if (used.has(pos) || (isKnown(fixed) && pos !== fixed)) continue;
       used.add(pos);
       current.push(pos);
       search(i + 1, total + score[i][pos - 1]);
@@ -378,20 +386,9 @@ function estimatePositions(team: { heroId: number; gpm: number }[], priors: Hero
     }
   };
   search(0, 0);
-  return best;
-}
-
-// estimatePositions() for a team from a full match's players, keyed by player_slot.
-export function estimateTeamPositions(team: MatchPlayer[], priors: HeroPositionPriors): Map<number, number> {
-  const positions = estimatePositions(
-    team.map((p) => ({ heroId: p.hero_id, gpm: p.gold_per_min ?? 0 })),
-    priors,
-  );
-  const result = new Map<number, number>();
-  team.forEach((p, i) => {
-    if (positions[i]) result.set(p.player_slot, positions[i]);
-  });
-  return result;
+  // Known positions that clash (two players with the same position_est)
+  // leave no valid assignment - fall back to what's known.
+  return bestScore === -Infinity ? team.map((p) => (isKnown(p.known) ? p.known : 0)) : best;
 }
 
 export interface PlayedPosition {
@@ -400,10 +397,22 @@ export interface PlayedPosition {
   estimated: boolean;
 }
 
-// The tracked account's position in a match, from match-extras-index.json's
-// lineups (no full match file needed): OpenDota's own position_est when it
-// has one, otherwise the same whole-team estimate as estimateTeamPositions().
-// null when the match isn't in the extras index (not stored yet).
+// Every player's position in one team's lineup (match-extras-index.json):
+// OpenDota's own position_est where it has one, the rest estimated around
+// those (see estimatePositions). Aligned with `lineup`; null = unknown.
+export function lineupPositions(lineup: LineupEntry[], priors: HeroPositionPriors | null): (PlayedPosition | null)[] {
+  const positions = estimatePositions(
+    lineup.map(([heroId, gpm, known]) => ({ heroId, gpm, known })),
+    priors,
+  );
+  return lineup.map(([, , known], i) => {
+    if (!positions[i]) return null;
+    return { pos: positions[i], estimated: !(known != null && known >= 1 && known <= 5) };
+  });
+}
+
+// The tracked account's position in a match - see lineupPositions(). null
+// when the match isn't in the extras index (not stored yet).
 export function positionInMatch(
   match: MatchSummary,
   extras: MatchExtras | undefined,
@@ -413,14 +422,7 @@ export function positionInMatch(
   if (!lineup) return null;
   const mine = lineup.findIndex(([heroId]) => heroId === match.hero_id);
   if (mine < 0) return null;
-  const known = lineup[mine][2];
-  if (known && known >= 1 && known <= 5) return { pos: known, estimated: false };
-  if (!priors) return null;
-  const estimated = estimatePositions(
-    lineup.map(([heroId, gpm]) => ({ heroId, gpm })),
-    priors,
-  )[mine];
-  return estimated ? { pos: estimated, estimated: true } : null;
+  return lineupPositions(lineup, priors)[mine];
 }
 
 // rank_tier is a per-player field: tens digit = medal (1 Herald .. 8

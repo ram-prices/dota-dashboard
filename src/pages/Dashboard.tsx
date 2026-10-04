@@ -23,6 +23,7 @@ import {
   heroName,
   isAbandoned,
   isEventGameModeKey,
+  lineupPositions,
   positionInMatch,
   isRadiant,
   laneOutcome,
@@ -137,6 +138,12 @@ export function Dashboard({ accountId }: { accountId: number }) {
   const initialTimeRange = (searchParams.get("time") as TimeRangeFilter) || "all";
   const initialTeammateHero = parseHeroIds(searchParams.get("teamHero"));
   const initialEnemyHero = parseHeroIds(searchParams.get("enemyHero"));
+  const parsePos = (raw: string | null) => {
+    const n = Math.floor(Number(raw));
+    return n >= 1 && n <= 5 ? n : 0;
+  };
+  const initialTeammatePos = parsePos(searchParams.get("teamPos"));
+  const initialEnemyPos = parsePos(searchParams.get("enemyPos"));
   const initialPatch = Math.floor(Number(searchParams.get("patch"))) || 0;
 
   // Secondary filters live behind "More filters" - opened from the start
@@ -145,6 +152,8 @@ export function Dashboard({ accountId }: { accountId: number }) {
     Boolean(
       initialTeammateHero.length ||
         initialEnemyHero.length ||
+        initialTeammatePos ||
+        initialEnemyPos ||
         initialGameMode.length ||
         initialFaction !== "all" ||
         initialParty !== "all" ||
@@ -177,6 +186,10 @@ export function Dashboard({ accountId }: { accountId: number }) {
   const [timeRangeFilter, setTimeRangeFilter] = useState<TimeRangeFilter>(initialTimeRange);
   const [teammateHeroFilter, setTeammateHeroFilter] = useState<number[]>(initialTeammateHero);
   const [enemyHeroFilter, setEnemyHeroFilter] = useState<number[]>(initialEnemyHero);
+  // 0 = any. With teammate/enemy heroes picked, the position applies to
+  // those heroes; on its own, to any teammate/enemy.
+  const [teammatePosFilter, setTeammatePosFilter] = useState(initialTeammatePos);
+  const [enemyPosFilter, setEnemyPosFilter] = useState(initialEnemyPos);
   const [patchFilter, setPatchFilter] = useState(initialPatch);
 
   // undefined = still loading, null = loaded but no rank/skill data available
@@ -201,6 +214,8 @@ export function Dashboard({ accountId }: { accountId: number }) {
     time?: TimeRangeFilter;
     teammateHero?: number[];
     enemyHero?: number[];
+    teammatePos?: number;
+    enemyPos?: number;
     patch?: number;
   }) {
     const merged = {
@@ -215,6 +230,8 @@ export function Dashboard({ accountId }: { accountId: number }) {
       time: timeRangeFilter,
       teammateHero: teammateHeroFilter,
       enemyHero: enemyHeroFilter,
+      teammatePos: teammatePosFilter,
+      enemyPos: enemyPosFilter,
       patch: patchFilter,
       ...next,
     };
@@ -246,6 +263,10 @@ export function Dashboard({ accountId }: { accountId: number }) {
         else params.set("teamHero", merged.teammateHero.join(","));
         if (merged.enemyHero.length === 0) params.delete("enemyHero");
         else params.set("enemyHero", merged.enemyHero.join(","));
+        if (!merged.teammatePos) params.delete("teamPos");
+        else params.set("teamPos", String(merged.teammatePos));
+        if (!merged.enemyPos) params.delete("enemyPos");
+        else params.set("enemyPos", String(merged.enemyPos));
         if (!merged.patch) params.delete("patch");
         else params.set("patch", String(merged.patch));
         return params;
@@ -263,6 +284,8 @@ export function Dashboard({ accountId }: { accountId: number }) {
     if (next.time !== undefined) setTimeRangeFilter(next.time);
     if (next.teammateHero !== undefined) setTeammateHeroFilter(next.teammateHero);
     if (next.enemyHero !== undefined) setEnemyHeroFilter(next.enemyHero);
+    if (next.teammatePos !== undefined) setTeammatePosFilter(next.teammatePos);
+    if (next.enemyPos !== undefined) setEnemyPosFilter(next.enemyPos);
     if (next.patch !== undefined) setPatchFilter(next.patch);
   }
 
@@ -271,6 +294,8 @@ export function Dashboard({ accountId }: { accountId: number }) {
   const moreFiltersActive =
     (teammateHeroFilter.length > 0 ? 1 : 0) +
     (enemyHeroFilter.length > 0 ? 1 : 0) +
+    (teammatePosFilter ? 1 : 0) +
+    (enemyPosFilter ? 1 : 0) +
     (gameModeFilter.length > 0 ? 1 : 0) +
     (factionFilter !== "all" ? 1 : 0) +
     (partyFilter !== "all" ? 1 : 0) +
@@ -297,6 +322,8 @@ export function Dashboard({ accountId }: { accountId: number }) {
       time: "all",
       teammateHero: [],
       enemyHero: [],
+      teammatePos: 0,
+      enemyPos: 0,
       patch: 0,
     });
   }
@@ -453,17 +480,42 @@ export function Dashboard({ accountId }: { accountId: number }) {
         if (partyFilter === "party" && solo) return false;
       }
       if (cutoff != null && m.start_time < cutoff) return false;
-      if (teammateHeroFilter.length > 0 || enemyHeroFilter.length > 0 || patchFilter) {
+      if (teammateHeroFilter.length > 0 || enemyHeroFilter.length > 0 || teammatePosFilter || enemyPosFilter || patchFilter) {
         const extra = extrasByMatchId?.get(m.match_id);
         if (!extra) return false;
-        if (teammateHeroFilter.length > 0) {
+        if (teammateHeroFilter.length > 0 && !teammatePosFilter) {
           const mySide = isRadiant(m.player_slot) ? extra.radiant : extra.dire;
           const hasAny = teammateHeroFilter.some((h) => h !== m.hero_id && mySide.includes(h));
           if (!hasAny) return false;
         }
-        if (enemyHeroFilter.length > 0) {
+        if (enemyHeroFilter.length > 0 && !enemyPosFilter) {
           const enemySide = isRadiant(m.player_slot) ? extra.dire : extra.radiant;
           const hasAny = enemyHeroFilter.some((h) => enemySide.includes(h));
+          if (!hasAny) return false;
+        }
+        // With a position picked: some teammate/enemy (one of the picked
+        // heroes, if any) played that position - real or estimated, the
+        // same positions the table shows.
+        if (teammatePosFilter) {
+          const lineup = isRadiant(m.player_slot) ? extra.radiant_lineup : extra.dire_lineup;
+          if (!lineup) return false;
+          const positions = lineupPositions(lineup, positionPriors);
+          const hasAny = lineup.some(
+            ([heroId], i) =>
+              heroId !== m.hero_id &&
+              positions[i]?.pos === teammatePosFilter &&
+              (teammateHeroFilter.length === 0 || teammateHeroFilter.includes(heroId)),
+          );
+          if (!hasAny) return false;
+        }
+        if (enemyPosFilter) {
+          const lineup = isRadiant(m.player_slot) ? extra.dire_lineup : extra.radiant_lineup;
+          if (!lineup) return false;
+          const positions = lineupPositions(lineup, positionPriors);
+          const hasAny = lineup.some(
+            ([heroId], i) =>
+              positions[i]?.pos === enemyPosFilter && (enemyHeroFilter.length === 0 || enemyHeroFilter.includes(heroId)),
+          );
           if (!hasAny) return false;
         }
         if (patchFilter && extra.patch !== patchFilter) return false;
@@ -482,8 +534,11 @@ export function Dashboard({ accountId }: { accountId: number }) {
     timeRangeFilter,
     teammateHeroFilter,
     enemyHeroFilter,
+    teammatePosFilter,
+    enemyPosFilter,
     patchFilter,
     extrasByMatchId,
+    positionPriors,
   ]);
 
   const totalPages = filtered ? Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)) : null;
@@ -543,6 +598,8 @@ export function Dashboard({ accountId }: { accountId: number }) {
       timeRangeFilter !== "all" ||
       teammateHeroFilter.length > 0 ||
       enemyHeroFilter.length > 0 ||
+      teammatePosFilter ||
+      enemyPosFilter ||
       patchFilter,
   );
   // A personally-abandoned match doesn't reflect a real win or loss (see
@@ -697,6 +754,34 @@ export function Dashboard({ accountId }: { accountId: number }) {
                       onChange={(next) => updateParams({ enemyHero: next, page: 1 })}
                     />
                   </div>
+                  <label
+                    className="filter-field"
+                    title="With teammate heroes picked: one of them played this position. Otherwise: any teammate did."
+                  >
+                    <span className="filter-label">Teammate position</span>
+                    <select value={teammatePosFilter} onChange={(e) => updateParams({ teammatePos: Number(e.target.value), page: 1 })}>
+                      <option value={0}>Any</option>
+                      {[1, 2, 3, 4, 5].map((pos) => (
+                        <option key={pos} value={pos}>
+                          {positionLabel(pos)?.replace("Position ", "P")}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label
+                    className="filter-field"
+                    title="With enemy heroes picked: one of them played this position. Otherwise: any enemy did."
+                  >
+                    <span className="filter-label">Enemy position</span>
+                    <select value={enemyPosFilter} onChange={(e) => updateParams({ enemyPos: Number(e.target.value), page: 1 })}>
+                      <option value={0}>Any</option>
+                      {[1, 2, 3, 4, 5].map((pos) => (
+                        <option key={pos} value={pos}>
+                          {positionLabel(pos)?.replace("Position ", "P")}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </>
               )}
               <div className="filter-field">
