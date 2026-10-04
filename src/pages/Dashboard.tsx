@@ -902,7 +902,10 @@ export function Dashboard({ accountId }: { accountId: number }) {
               </th>
               {(teamCondition || enemyCondition) && (
                 <th className="match-row-matched-cell" title="Which teammate/enemy filter this match fulfills">
-                  Matched
+                  <span className="th-long">Matched</span>
+                  <span className="th-short">
+                    <span className="sr-only">Matched</span>
+                  </span>
                 </th>
               )}
               <th className="match-row-spacer" aria-hidden="true" />

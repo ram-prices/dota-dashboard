@@ -905,6 +905,20 @@ tbody tr:last-child td {
 .matched-enemy .matched-side {
   color: var(--dire);
 }
+@media (max-width: 640px) {
+  /* Phones: just the colored-edge icon (the tooltip still says ally/enemy) */
+  .matched-side {
+    display: none;
+  }
+  .matched-hero img {
+    width: 18px;
+    height: 18px;
+  }
+  .match-table .match-row-matched-cell {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+}
 /* Lane outcome: a bare colored arrow (no box), so it reads as a
    secondary stat rather than a second match result. */
 .lane-arrow {
