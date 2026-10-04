@@ -865,6 +865,46 @@ tbody tr:last-child td {
   color: var(--text-dim);
   background: color-mix(in srgb, var(--text-dim) 16%, transparent);
 }
+/* "Matched" column (only while a teammate/enemy filter is on): the hero(es)
+   that satisfied it, edged mint for an ally and rose for an enemy. */
+.match-table .match-row-matched-cell {
+  text-align: center;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+.matched-heroes {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.matched-hero {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.matched-hero img {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--shape-xs);
+  border: 2px solid transparent;
+}
+.matched-ally img {
+  border-color: var(--radiant);
+}
+.matched-enemy img {
+  border-color: var(--dire);
+}
+.matched-ally .matched-side {
+  color: var(--radiant);
+}
+.matched-enemy .matched-side {
+  color: var(--dire);
+}
 /* Lane outcome: a bare colored arrow (no box), so it reads as a
    secondary stat rather than a second match result. */
 .lane-arrow {

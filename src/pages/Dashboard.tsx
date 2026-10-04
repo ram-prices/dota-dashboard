@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   errorMessage,
@@ -20,6 +20,7 @@ import {
   formatRelativeTime,
   gameModeKeyLabel,
   heroPortrait,
+  heroIcon,
   heroName,
   isAbandoned,
   isEventGameModeKey,
@@ -454,6 +455,40 @@ export function Dashboard({ accountId }: { accountId: number }) {
     return visible.sort((a, b) => gameModeKeyLabel(a).localeCompare(gameModeKeyLabel(b)));
   }, [allMatches, isEventModeActive, isNormalModeActive]);
 
+  const teamCondition = teammateHeroFilter.length > 0 || teammatePosFilter > 0;
+  const enemyCondition = enemyHeroFilter.length > 0 || enemyPosFilter > 0;
+
+  // One side's teammate/enemy condition for a match: the heroes on that side
+  // that satisfy it - one of the picked heroes (any hero, if none picked)
+  // and, with a position picked, playing that position (real or estimated,
+  // the same positions the table shows). Empty = condition not met. Shared
+  // by the filter itself and the table's "Matched" column.
+  const sideMatches = useCallback(
+    (m: MatchSummary, side: "team" | "enemy"): number[] => {
+      const extra = extrasByMatchId?.get(m.match_id);
+      if (!extra) return [];
+      const heroes = side === "team" ? teammateHeroFilter : enemyHeroFilter;
+      const pos = side === "team" ? teammatePosFilter : enemyPosFilter;
+      const onMySide = side === "team";
+      if (!pos) {
+        const heroIds = isRadiant(m.player_slot) === onMySide ? extra.radiant : extra.dire;
+        return heroes.filter((h) => (!onMySide || h !== m.hero_id) && heroIds.includes(h));
+      }
+      const lineup = isRadiant(m.player_slot) === onMySide ? extra.radiant_lineup : extra.dire_lineup;
+      if (!lineup) return [];
+      const positions = lineupPositions(lineup, positionPriors);
+      return lineup
+        .filter(
+          ([heroId], i) =>
+            (!onMySide || heroId !== m.hero_id) &&
+            positions[i]?.pos === pos &&
+            (heroes.length === 0 || heroes.includes(heroId)),
+        )
+        .map(([heroId]) => heroId);
+    },
+    [extrasByMatchId, teammateHeroFilter, enemyHeroFilter, teammatePosFilter, enemyPosFilter, positionPriors],
+  );
+
   const filtered = useMemo(() => {
     if (!allMatches) return null;
     const cutoff = timeRangeFilter !== "all" ? Date.now() / 1000 - TIME_RANGE_DAYS[timeRangeFilter] * 86400 : null;
@@ -491,41 +526,17 @@ export function Dashboard({ accountId }: { accountId: number }) {
         if (partyFilter === "party" && solo) return false;
       }
       if (cutoff != null && m.start_time < cutoff) return false;
-      const teamCondition = teammateHeroFilter.length > 0 || teammatePosFilter > 0;
-      const enemyCondition = enemyHeroFilter.length > 0 || enemyPosFilter > 0;
       if (teamCondition || enemyCondition || patchFilter) {
         const extra = extrasByMatchId?.get(m.match_id);
         if (!extra) return false;
         if (patchFilter && extra.patch !== patchFilter) return false;
-
-        // One side's condition: one of its picked heroes (any hero, if none
-        // picked) is on that side - and, with a position picked, played that
-        // position (real or estimated, the same positions the table shows).
-        const sideMatches = (side: "team" | "enemy"): boolean => {
-          const heroes = side === "team" ? teammateHeroFilter : enemyHeroFilter;
-          const pos = side === "team" ? teammatePosFilter : enemyPosFilter;
-          const onMySide = side === "team";
-          if (!pos) {
-            const heroIds = isRadiant(m.player_slot) === onMySide ? extra.radiant : extra.dire;
-            return heroes.some((h) => (!onMySide || h !== m.hero_id) && heroIds.includes(h));
-          }
-          const lineup = isRadiant(m.player_slot) === onMySide ? extra.radiant_lineup : extra.dire_lineup;
-          if (!lineup) return false;
-          const positions = lineupPositions(lineup, positionPriors);
-          return lineup.some(
-            ([heroId], i) =>
-              (!onMySide || heroId !== m.hero_id) &&
-              positions[i]?.pos === pos &&
-              (heroes.length === 0 || heroes.includes(heroId)),
-          );
-        };
-
+        const teamOk = () => sideMatches(m, "team").length > 0;
+        const enemyOk = () => sideMatches(m, "enemy").length > 0;
         if (teamCondition && enemyCondition) {
-          const ok = heroJoin === "or" ? sideMatches("team") || sideMatches("enemy") : sideMatches("team") && sideMatches("enemy");
-          if (!ok) return false;
-        } else if (teamCondition && !sideMatches("team")) {
+          if (!(heroJoin === "or" ? teamOk() || enemyOk() : teamOk() && enemyOk())) return false;
+        } else if (teamCondition && !teamOk()) {
           return false;
-        } else if (enemyCondition && !sideMatches("enemy")) {
+        } else if (enemyCondition && !enemyOk()) {
           return false;
         }
       }
@@ -548,7 +559,9 @@ export function Dashboard({ accountId }: { accountId: number }) {
     heroJoin,
     patchFilter,
     extrasByMatchId,
-    positionPriors,
+    sideMatches,
+    teamCondition,
+    enemyCondition,
   ]);
 
   const totalPages = filtered ? Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)) : null;
@@ -887,6 +900,11 @@ export function Dashboard({ accountId }: { accountId: number }) {
               <th className="match-row-lane-cell">
                 <span className="sr-only">Lane outcome</span>
               </th>
+              {(teamCondition || enemyCondition) && (
+                <th className="match-row-matched-cell" title="Which teammate/enemy filter this match fulfills">
+                  Matched
+                </th>
+              )}
               <th className="match-row-spacer" aria-hidden="true" />
               <th className="match-row-kda-cell" title="Kills">K</th>
               <th className="match-row-kda-cell" title="Deaths">D</th>
@@ -897,8 +915,7 @@ export function Dashboard({ accountId }: { accountId: number }) {
                 <span className="th-short">Time</span>
               </th>
               <th className="match-row-mode-cell" title="Lobby type, game mode, and average rank">
-                <span className="th-long">Type / Mode / Rank</span>
-                <span className="th-short">Mode</span>
+                Lobby
               </th>
             </tr>
           </thead>
@@ -963,6 +980,14 @@ export function Dashboard({ accountId }: { accountId: number }) {
                       </span>
                     )}
                   </td>
+                  {(teamCondition || enemyCondition) && (
+                    <td className="match-row-matched-cell">
+                      <MatchedHeroes
+                        team={teamCondition ? sideMatches(m, "team") : []}
+                        enemy={enemyCondition ? sideMatches(m, "enemy") : []}
+                      />
+                    </td>
+                  )}
                   <td className="match-row-spacer" aria-hidden="true" />
                   <td className="match-row-kda-cell">{m.kills}</td>
                   <td className="match-row-kda-cell">{m.deaths}</td>
@@ -1008,5 +1033,28 @@ export function Dashboard({ accountId }: { accountId: number }) {
         </div>
       )}
     </div>
+  );
+}
+
+// The "Matched" column: which teammate/enemy hero(es) let this match through
+// the filter - a small hero icon edged mint for an ally, rose for an enemy.
+function MatchedHeroes({ team, enemy }: { team: number[]; enemy: number[] }) {
+  const entries = [
+    ...team.map((heroId) => ({ heroId, side: "ally" as const })),
+    ...enemy.map((heroId) => ({ heroId, side: "enemy" as const })),
+  ];
+  return (
+    <span className="matched-heroes">
+      {entries.map(({ heroId, side }) => (
+        <span
+          key={`${side}-${heroId}`}
+          className={`matched-hero matched-${side}`}
+          title={`${side === "ally" ? "Allied" : "Enemy"} ${heroName(heroId)}`}
+        >
+          {heroIcon(heroId) ? <img src={heroIcon(heroId)!} alt={heroName(heroId)} /> : heroName(heroId)}
+          <span className="matched-side">{side === "ally" ? "Ally" : "Enemy"}</span>
+        </span>
+      ))}
+    </span>
   );
 }
